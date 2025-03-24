@@ -57,21 +57,21 @@ trait IfThenElseExp extends IfThenElse with EffectExp {
   }
   
   override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = e match {
-    case IfThenElse(c,a,b) => IfThenElse(f(c),f(a),f(b))
+    case IfThenElse(c,a,b) => IfThenElse[A](f(c),f(a),f(b))
     case _ => super.mirrorDef(e,f)
   }
   
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case Reflect(IfThenElse(c,a,b), u, es) => 
+    case Reflect(IfThenElse(c,a,b), u, es) =>
       if (f.hasContext)
-        __ifThenElse(f(c),f.reflectBlock(a),f.reflectBlock(b))
+        __ifThenElse[A](f(c),f.reflectBlock(a),f.reflectBlock(b))
       else
-        reflectMirrored(Reflect(IfThenElse(f(c),f(a),f(b)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case IfThenElse(c,a,b) => 
+        reflectMirrored(Reflect(IfThenElse[A](f(c),f(a),f(b)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case IfThenElse(c,a,b) =>
       if (f.hasContext)
-        __ifThenElse(f(c),f.reflectBlock(a),f.reflectBlock(b))
+        __ifThenElse[A](f(c),f.reflectBlock(a),f.reflectBlock(b))
       else
-        IfThenElse(f(c),f(a),f(b)) // FIXME: should apply pattern rewrites (ie call smart constructor)
+        IfThenElse[A](f(c),f(a),f(b)) // FIXME: should apply pattern rewrites (ie call smart constructor)
     case _ => super.mirror(e,f)
   }
 
@@ -193,7 +193,7 @@ trait IfThenElseExpOpt extends IfThenElseExp { this: BooleanOpsExp with EqualExp
     case Const(true) => thenp
     case Const(false) => elsep
     case Def(BooleanNegate(a)) => __ifThenElse(a, elsep, thenp)
-    case Def(e@NotEqual(a,b)) => __ifThenElse(equals(a,b)(e.mA,e.mB,pos), elsep, thenp)
+    case Def(e@NotEqual(a,b)) => __ifThenElse(equals(a,b)(using e.mA,e.mB,pos), elsep, thenp)
     case _ =>
       super.__ifThenElse(cond, thenp, elsep)
   }
