@@ -52,13 +52,13 @@ trait TupledFunctions extends Functions with TupleOps {
   }
   //implicit def toLambdaOpsAny[B:Typ](fun: Rep[Any => B]) =
   //  toLambdaOps(fun)
-  implicit def toLambdaOps2[A1:Typ,A2:Typ,B:Typ](fun: Rep[((A1,A2)) => B]) =
+  implicit def toLambdaOps2[A1:Typ,A2:Typ,B:Typ](fun: Rep[((A1,A2)) => B]): LambdaOps2[A1,A2,B] =
     new LambdaOps2(fun)
-  implicit def toLambdaOps3[A1:Typ,A2:Typ,A3:Typ,B:Typ](fun: Rep[((A1,A2,A3)) => B]) =
+  implicit def toLambdaOps3[A1:Typ,A2:Typ,A3:Typ,B:Typ](fun: Rep[((A1,A2,A3)) => B]): LambdaOps3[A1,A2,A3,B] =
     new LambdaOps3(fun)
-  implicit def toLambdaOps4[A1:Typ,A2:Typ,A3:Typ,A4:Typ,B:Typ](fun: Rep[((A1,A2,A3,A4)) => B]) =
+  implicit def toLambdaOps4[A1:Typ,A2:Typ,A3:Typ,A4:Typ,B:Typ](fun: Rep[((A1,A2,A3,A4)) => B]): LambdaOps4[A1,A2,A3,A4,B] =
     new LambdaOps4(fun)
-  implicit def toLambdaOps5[A1:Typ,A2:Typ,A3:Typ,A4:Typ,A5:Typ,B:Typ](fun: Rep[((A1,A2,A3,A4,A5)) => B]) =
+  implicit def toLambdaOps5[A1:Typ,A2:Typ,A3:Typ,A4:Typ,A5:Typ,B:Typ](fun: Rep[((A1,A2,A3,A4,A5)) => B]): LambdaOps5[A1,A2,A3,A4,A5,B] =
     new LambdaOps5(fun)
 }
 

@@ -3,6 +3,7 @@ package scala.lms
 import scala.reflect.ClassTag
 import scala.quoted.*
 
+type Manifest[T] = ClassTag[T]
 type RefinedManifest[T] = ClassTag[T]
 
 object RefinedManifest {
@@ -17,3 +18,5 @@ def printTypeInfoImpl[T: Type](using Quotes): Expr[Unit] = {
   println(s"Staged type: ${tpe.show}")
   '{ () }
 }
+
+implicit val nullManifest: Manifest[Null] = ClassTag(classOf[Null])
