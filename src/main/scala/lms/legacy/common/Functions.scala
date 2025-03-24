@@ -105,15 +105,15 @@ trait FunctionsExp extends Functions with EffectExp {
   }
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case e@Lambda(g,x:Exp[Any],y:Block[b]) => toAtom(Lambda(f(g),f(x),f(y))(e.mA,e.mB))(mtyp1[A],pos)
-    case e@Apply(g,arg) => doApply(f(g), f(arg))(e.mA,mtype(e.mB),pos)
-    case Reflect(e@Apply(g,arg), u, es) => reflectMirrored(Reflect(Apply(f(g),f(arg))(e.mA,mtype(e.mB)), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case e@Lambda(g,x:Exp[Any],y:Block[b]) => toAtom(Lambda(f(g),f(x),f(y))(using e.mA,e.mB))(using mtyp1[A],pos)
+    case e@Apply(g,arg) => doApply(f(g), f(arg))(using e.mA,mtype(e.mB),pos)
+    case Reflect(e@Apply(g,arg), u, es) => reflectMirrored(Reflect(Apply(f(g),f(arg))(using e.mA,mtype(e.mB)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]] // why??
 
   override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
-    case e@Lambda(g, x, y) => Lambda(f(g), f(x), f(y))(e.mA,e.mB)
-    case e@Apply(g, arg) => Apply(f(g), f(arg))(e.mA, mtype(e.mB))
+    case e@Lambda(g, x, y) => Lambda(f(g), f(x), f(y))(using e.mA,e.mB)
+    case e@Apply(g, arg) => Apply(f(g), f(arg))(using e.mA, mtype(e.mB))
     case _ => super.mirrorDef(e, f)
   }).asInstanceOf[Def[A]]
 
