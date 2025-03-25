@@ -6,16 +6,16 @@ import java.io.PrintWriter
 trait LiftNumeric {
   this: Base =>
 
-  implicit def numericToNumericRep[T:Numeric:Typ](x: T) = unit(x)
+  implicit def numericToNumericRep[T:Numeric:Typ](x: T): Rep[T] = unit(x)
 }
 
 trait NumericOps extends Variables {
   this: PrimitiveOps =>
 
   // workaround for infix not working with manifests
-  implicit def numericToNumericOps   [T:Numeric:Typ](n: T)      = new NumericOpsCls(unit(n))
-  implicit def repNumericToNumericOps[T:Numeric:Typ](n: Rep[T]) = new NumericOpsCls(n)
-  implicit def varNumericToNumericOps[T:Numeric:Typ](n: Var[T]) = new NumericOpsCls(readVar(n))
+  implicit def numericToNumericOps[T:Numeric:Typ](n: T): NumericOpsCls[T]  = new NumericOpsCls(unit(n))
+  implicit def repNumericToNumericOps[T:Numeric:Typ](n: Rep[T]): NumericOpsCls[T] = new NumericOpsCls(n)
+  implicit def varNumericToNumericOps[T:Numeric:Typ](n: Var[T]): NumericOpsCls[T] = new NumericOpsCls(readVar(n))
   
   class NumericOpsCls[T:Numeric:Typ](lhs: Rep[T]){
     def +[A](rhs: A)(implicit c: A => T, pos: SourceContext) = numeric_plus(lhs,unit(c(rhs)))
@@ -53,7 +53,7 @@ trait NumericOpsExp extends NumericOps with VariablesExp with BaseFatExp {
     case e@NumericPlus  (l,r) => numeric_plus  (f(l), f(r))(using e.aev.asInstanceOf[Numeric[A]], mtype(e.mev), pos)
     case e@NumericMinus (l,r) => numeric_minus (f(l), f(r))(using e.aev.asInstanceOf[Numeric[A]], mtype(e.mev), pos)
     case e@NumericTimes (l,r) => numeric_times (f(l), f(r))(using e.aev.asInstanceOf[Numeric[A]], mtype(e.mev), pos)
-    case e@NumericDivide(l,r) => numeric_divide(f(l), f(r))(using using e.aev.asInstanceOf[Numeric[A]], mtype(e.mev), pos)
+    case e@NumericDivide(l,r) => numeric_divide(f(l), f(r))(using e.aev.asInstanceOf[Numeric[A]], mtype(e.mev), pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 }

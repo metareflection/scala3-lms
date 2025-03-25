@@ -20,4 +20,5 @@ that and generate the code much more directly.
 
 ## Manual fixes
 
-- tree-smashed `using` into sveral places (-rewrite suggested but broken)
+- tree-smashed `using` into several places (-rewrite suggested but broken)
+- changed `x.toDouble` to use a manual function

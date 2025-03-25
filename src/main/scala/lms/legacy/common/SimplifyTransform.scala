@@ -39,7 +39,7 @@ trait SimplifyTransform extends internal.FatScheduling {
       val ss = syms(x)
       val tss = t(ss)
       if (ss != tss) {
-        val s2 = mirror(x, t)(mtype(s.tp), mpos(s.pos))
+        val s2 = mirror(x, t)(using mtype(s.tp), mpos(s.pos))
         if (s2 == s) {
           printerr("warning: mirroring of "+s+"="+x+" syms " + ss.mkString(",") + " returned same object (expected t(syms) = " + tss.mkString(",") + ")")
         }

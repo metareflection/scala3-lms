@@ -95,7 +95,7 @@ trait Effects extends Expressions with Blocks with Utils {
     (u.mayWrite ++ v.mayWrite).distinct, (u.mstWrite ++ v.mstWrite).distinct
   )
 
-  def infix_star(u: Summary) = Pure() orElse u // any number of repetitions, including 0
+  def infix_star(u: Summary) = infix_orElse(Pure(), u) // any number of repetitions, including 0
 
   def infix_withoutControl(u: Summary) = new Summary(
     u.maySimple, u.mstSimple,

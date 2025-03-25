@@ -6,9 +6,9 @@ import scala.lms.util.OverloadHack
 
 trait OrderingOps extends Base with Variables with BooleanOps with PrimitiveOps with OverloadHack {
   // workaround for infix not working with implicits in PrimitiveOps
-  implicit def orderingToOrderingOps[T:Ordering:Typ](n: T) = new OrderingOpsCls(unit(n))
-  implicit def repOrderingToOrderingOps[T:Ordering:Typ](n: Rep[T]) = new OrderingOpsCls(n)
-  implicit def varOrderingToOrderingOps[T:Ordering:Typ](n: Var[T]) = new OrderingOpsCls(readVar(n))
+  implicit def orderingToOrderingOps[T:Ordering:Typ](n: T): OrderingOpsCls[T] = new OrderingOpsCls(unit(n))
+  implicit def repOrderingToOrderingOps[T:Ordering:Typ](n: Rep[T]): OrderingOpsCls[T] = new OrderingOpsCls(n)
+  implicit def varOrderingToOrderingOps[T:Ordering:Typ](n: Var[T]): OrderingOpsCls[T] = new OrderingOpsCls(readVar(n))
 
   class OrderingOpsCls[T:Ordering:Typ](lhs: Rep[T]){
     def <       (rhs: Rep[T])(implicit pos: SourceContext) = ordering_lt(lhs, rhs)
@@ -65,22 +65,22 @@ trait OrderingOpsExp extends OrderingOps with VariablesExp {
   def ordering_compare[T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Rep[Int]     = OrderingCompare(lhs,rhs)
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case e@OrderingLT(a,b)                      => ordering_lt(f(a),f(b))(e.aev,e.mev,pos)
-    case e@OrderingLTEQ(a,b)                    => ordering_lteq(f(a),f(b))(e.aev,e.mev,pos)
-    case e@OrderingGT(a,b)                      => ordering_gt(f(a),f(b))(e.aev,e.mev,pos)
-    case e@OrderingGTEQ(a,b)                    => ordering_gteq(f(a),f(b))(e.aev,e.mev,pos)
-    case e@OrderingEquiv(a,b)                   => ordering_equiv(f(a),f(b))(e.aev,e.mev,pos)
-    case e@OrderingMax(a,b)                     => ordering_max(f(a),f(b))(e.aev.asInstanceOf[Ordering[A]],mtype(e.mev),pos)
-    case e@OrderingMin(a,b)                     => ordering_min(f(a),f(b))(e.aev.asInstanceOf[Ordering[A]],mtype(e.mev),pos)
-    case e@OrderingCompare(a,b)                 => ordering_compare(f(a),f(b))(e.aev,e.mev,pos)
-    case Reflect(e@OrderingLT(a,b), u, es)      => reflectMirrored(Reflect(OrderingLT(f(a),f(b))(e.aev,e.mev), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@OrderingLTEQ(a,b), u, es)    => reflectMirrored(Reflect(OrderingLTEQ(f(a),f(b))(e.aev,e.mev), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@OrderingGT(a,b), u, es)      => reflectMirrored(Reflect(OrderingGT(f(a),f(b))(e.aev,e.mev), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@OrderingGTEQ(a,b), u, es)    => reflectMirrored(Reflect(OrderingGTEQ(f(a),f(b))(e.aev,e.mev), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@OrderingEquiv(a,b), u, es)   => reflectMirrored(Reflect(OrderingEquiv(f(a),f(b))(e.aev,e.mev), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@OrderingMax(a,b), u, es)     => reflectMirrored(Reflect(OrderingMax(f(a),f(b))(e.aev.asInstanceOf[Ordering[A]],mtype(e.mev)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@OrderingMin(a,b), u, es)     => reflectMirrored(Reflect(OrderingMin(f(a),f(b))(e.aev.asInstanceOf[Ordering[A]],mtype(e.mev)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@OrderingCompare(a,b), u, es) => reflectMirrored(Reflect(OrderingCompare(f(a),f(b))(e.aev,e.mev), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case e@OrderingLT(a,b)                      => ordering_lt(f(a),f(b))(using e.aev,e.mev,pos)
+    case e@OrderingLTEQ(a,b)                    => ordering_lteq(f(a),f(b))(using e.aev,e.mev,pos)
+    case e@OrderingGT(a,b)                      => ordering_gt(f(a),f(b))(using e.aev,e.mev,pos)
+    case e@OrderingGTEQ(a,b)                    => ordering_gteq(f(a),f(b))(using e.aev,e.mev,pos)
+    case e@OrderingEquiv(a,b)                   => ordering_equiv(f(a),f(b))(using e.aev,e.mev,pos)
+    case e@OrderingMax(a,b)                     => ordering_max(f(a),f(b))(using e.aev.asInstanceOf[Ordering[A]],mtype(e.mev),pos)
+    case e@OrderingMin(a,b)                     => ordering_min(f(a),f(b))(using e.aev.asInstanceOf[Ordering[A]],mtype(e.mev),pos)
+    case e@OrderingCompare(a,b)                 => ordering_compare(f(a),f(b))(using e.aev,e.mev,pos)
+    case Reflect(e@OrderingLT(a,b), u, es)      => reflectMirrored(Reflect(OrderingLT(f(a),f(b))(using e.aev,e.mev), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@OrderingLTEQ(a,b), u, es)    => reflectMirrored(Reflect(OrderingLTEQ(f(a),f(b))(using e.aev,e.mev), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@OrderingGT(a,b), u, es)      => reflectMirrored(Reflect(OrderingGT(f(a),f(b))(using e.aev,e.mev), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@OrderingGTEQ(a,b), u, es)    => reflectMirrored(Reflect(OrderingGTEQ(f(a),f(b))(using e.aev,e.mev), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@OrderingEquiv(a,b), u, es)   => reflectMirrored(Reflect(OrderingEquiv(f(a),f(b))(using e.aev,e.mev), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@OrderingMax(a,b), u, es)     => reflectMirrored(Reflect(OrderingMax(f(a),f(b))(using e.aev.asInstanceOf[Ordering[A]],mtype(e.mev)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@OrderingMin(a,b), u, es)     => reflectMirrored(Reflect(OrderingMin(f(a),f(b))(using e.aev.asInstanceOf[Ordering[A]],mtype(e.mev)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@OrderingCompare(a,b), u, es) => reflectMirrored(Reflect(OrderingCompare(f(a),f(b))(using e.aev,e.mev), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case _ => super.mirror(e, f)
   }).asInstanceOf[Exp[A]]
 }

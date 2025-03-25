@@ -9,7 +9,7 @@ trait RangeOps extends Base {
   implicit def rangeTyp: Typ[Range]
 
   // workaround for infix not working with manifests
-  implicit def repRangeToRangeOps(r: Rep[Range]) = new rangeOpsCls(r)
+  implicit def repRangeToRangeOps(r: Rep[Range]): rangeOpsCls = new rangeOpsCls(r)
   class rangeOpsCls(r: Rep[Range]){
     def foreach(f: Rep[Int] => Rep[Unit])(implicit pos: SourceContext) = range_foreach(r, f)
   }
@@ -52,15 +52,15 @@ trait RangeOpsExp extends RangeOps with PrimitiveOps with EffectExp {
   def range_foreach(r: Exp[Range], block: Exp[Int] => Exp[Unit])(implicit pos: SourceContext) : Exp[Unit] = {
     val i = fresh[Int]
     val a = reifyEffects(block(i))
-    reflectEffect(RangeForeach(r.start, r.end, i, a), summarizeEffects(a).star)
+    reflectEffect(RangeForeach(range_start(r), range_end(r), i, a), infix_star(summarizeEffects(a)))
   }
   
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case Reflect(RangeForeach(s,e,i,b), u, es) => reflectMirrored(Reflect(RangeForeach(f(s),f(e),f(i).asInstanceOf[Sym[Int]],f(b)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(RangeStart(r), u, es) => reflectMirrored(Reflect(RangeStart(f(r)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(RangeStep(r), u, es) => reflectMirrored(Reflect(RangeStep(f(r)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(RangeEnd(r), u, es) => reflectMirrored(Reflect(RangeEnd(f(r)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(Until(s,e), u, es) => reflectMirrored(Reflect(Until(f(s),f(e)), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case Reflect(RangeForeach(s,e,i,b), u, es) => reflectMirrored(Reflect(RangeForeach(f(s),f(e),f(i).asInstanceOf[Sym[Int]],f(b)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(RangeStart(r), u, es) => reflectMirrored(Reflect(RangeStart(f(r)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(RangeStep(r), u, es) => reflectMirrored(Reflect(RangeStep(f(r)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(RangeEnd(r), u, es) => reflectMirrored(Reflect(RangeEnd(f(r)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(Until(s,e), u, es) => reflectMirrored(Reflect(Until(f(s),f(e)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 

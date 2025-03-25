@@ -37,10 +37,10 @@ trait ObjectOpsExp extends ObjectOps with StringOpsExp with VariablesExp {
   // mirroring
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case e@ObjectUnsafeImmutable(a) => object_unsafe_immutable(f(a))(mtype(e.m),pos)
+    case e@ObjectUnsafeImmutable(a) => object_unsafe_immutable(f(a))(using mtype(e.m),pos)
     case e@ObjectToString(a) => object_tostring(f(a))
-    case Reflect(e@ObjectUnsafeImmutable(a), u, es) => reflectMirrored(Reflect(ObjectUnsafeImmutable(f(a))(mtype(e.m)), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@ObjectUnsafeMutable(a), u, es) => reflectMirrored(Reflect(ObjectUnsafeMutable(f(a))(mtype(e.m)), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case Reflect(e@ObjectUnsafeImmutable(a), u, es) => reflectMirrored(Reflect(ObjectUnsafeImmutable(f(a))(using mtype(e.m)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@ObjectUnsafeMutable(a), u, es) => reflectMirrored(Reflect(ObjectUnsafeMutable(f(a))(using mtype(e.m)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 
