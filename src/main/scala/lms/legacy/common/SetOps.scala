@@ -12,7 +12,7 @@ trait SetOps extends Base {
     def apply[A:Typ](xs: Rep[A]*)(implicit pos: SourceContext) = set_new[A](xs)
   }
 
-  implicit def repSetToSetOps[A:Typ](v: Rep[Set[A]]) = new setOpsCls(v)
+  implicit def repSetToSetOps[A:Typ](v: Rep[Set[A]]): setOpsCls[A] = new setOpsCls(v)
 
   class setOpsCls[A:Typ](s: Rep[Set[A]]) {
     def contains(i: Rep[A])(implicit pos: SourceContext) = set_contains(s, i)
@@ -36,7 +36,7 @@ trait SetOps extends Base {
 
 trait SetOpsExp extends SetOps with ArrayOps with BooleanOps with EffectExp {
   implicit def setTyp[T:Typ]: Typ[Set[T]] = {
-    implicit val ManifestTyp(m) = typ[T]
+    implicit val ManifestTyp(m: Manifest[T]) = typ[T]
     manifestTyp
   }
 
@@ -49,7 +49,7 @@ trait SetOpsExp extends SetOps with ArrayOps with BooleanOps with EffectExp {
   case class SetToSeq[A:Typ](s: Exp[Set[A]]) extends Def[Seq[A]]
   case class SetToArray[A:Typ](s: Exp[Set[A]]) extends Def[Array[A]] {
     //val array = unit(manifest[A].newArray(0))
-    val array = NewArray[A](s.size)
+    val array = NewArray[A](set_size(s))
   }
 
   def set_new[A:Typ](xs: Seq[Exp[A]])(implicit pos: SourceContext) = reflectMutable(SetNew(xs, typ[A]))

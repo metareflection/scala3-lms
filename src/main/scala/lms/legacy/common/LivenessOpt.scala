@@ -23,7 +23,7 @@ trait LivenessOpt extends NestedBlockTraversal {
       //printlog("** add used at " + t + ": " + syms(rhs))
       List(t)*/
     case e => 
-      if (e.lhs exists used) {
+      if (infix_lhs(e) exists used) {
         used ++= syms(e.rhs)
         List(t)
       } else {

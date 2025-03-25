@@ -92,7 +92,7 @@ trait StructExp extends StructOps with StructTags with BaseExp with EffectExp wi
     val x: Sym[T] = Sym[T](-99) // self symbol -- not defined anywhere, so make it obvious!! (TODO)
     val fieldSyms = fields map {
       case (index, false, rhs) => (index, rhs(x))
-      case (index, true, rhs) => val y = rhs(x); (index, var_new(y)(y.tp,implicitly[SourceContext]).e)
+      case (index, true, rhs) => val y = rhs(x); (index, var_new(y)(using y.tp,implicitly[SourceContext]).e)
     }
     val ManifestTyp(manifest) = typ[T]
     struct(AnonTag(manifest.asInstanceOf[RefinedManifest[T]]), fieldSyms)
@@ -104,9 +104,9 @@ trait StructExp extends StructOps with StructTags with BaseExp with EffectExp wi
 
   def imm_field(struct: Exp[Any], name: String, f: Exp[Any])(implicit pos: SourceContext): Exp[Any] = f.tp match {
     case VariableTyp(tp1) =>
-      field(struct,name)(mtype(tp1),pos)
+      field(struct,name)(using mtype(tp1),pos)
     case tp =>
-      object_unsafe_immutable(f)(mtype(tp),pos)
+      object_unsafe_immutable(f)(using mtype(tp),pos)
   }
 
   // don't let unsafeImmutable hide struct-ness
@@ -169,11 +169,11 @@ trait StructExp extends StructOps with StructTags with BaseExp with EffectExp wi
   // TODO: read/write/copy summary
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case SimpleStruct(tag, elems) => struct(tag, elems map { case (k,v) => (k, f(v)) })(mtyp1[A],pos)
-    case FieldApply(struct, key) => field(f(struct), key)(mtyp1[A],pos)
-    case Reflect(FieldApply(struct, key), u, es) => reflectMirrored(Reflect(FieldApply(f(struct), key), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@FieldUpdate(struct, key, rhs), u, es) => reflectMirrored(Reflect(FieldUpdate(f(struct), key, f(rhs))(e.mA), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(SimpleStruct(tag, elems), u, es) => reflectMirrored(Reflect(SimpleStruct(tag, elems map { case (k,v) => (k, f(v)) }), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case SimpleStruct(tag, elems) => struct(tag, elems map { case (k,v) => (k, f(v)) })(using mtyp1[A],pos)
+    case FieldApply(struct, key) => field(f(struct), key)(using mtyp1[A],pos)
+    case Reflect(FieldApply(struct, key), u, es) => reflectMirrored(Reflect(FieldApply(f(struct), key), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@FieldUpdate(struct, key, rhs), u, es) => reflectMirrored(Reflect(FieldUpdate(f(struct), key, f(rhs))(using e.mA), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(SimpleStruct(tag, elems), u, es) => reflectMirrored(Reflect(SimpleStruct(tag, elems map { case (k,v) => (k, f(v)) }), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 
@@ -244,7 +244,7 @@ trait StructExpOptCommon extends StructExpOpt with VariablesExp with IfThenElseE
   override def var_new[T:Typ](init: Exp[T])(implicit pos: SourceContext): Var[T] = init match {
     case Def(Struct(tag, elems)) =>
       //val r = Variable(struct(tag, elems.mapValues(e=>var_new(e).e))) // DON'T use mapValues!! <--lazy
-      Variable(struct[Variable[T]](NestClassTag[Variable,T](tag), elems.map(p=>(p._1,var_new(p._2)(p._2.tp,pos).e))))
+      Variable(struct[Variable[T]](NestClassTag[Variable,T](tag), elems.map(p=>(p._1,var_new(p._2)(using p._2.tp,pos).e))))
     case _ =>
       super.var_new(init)
   }
@@ -254,12 +254,12 @@ trait StructExpOptCommon extends StructExpOpt with VariablesExp with IfThenElseE
       assert(tagL == tagR)
       for (((lk,lv), (rk,rv)) <- elemsL zip elemsR) {
         assert(lk == rk)
-        var_assign(Variable(lv), rv)(rv.tp, pos)
+        var_assign(Variable(lv), rv)(using rv.tp, pos)
       }
       Const(())
     case (Variable(Def(Struct(NestClassTag(tag), elems: Seq[(String,Exp[Variable[Any]])]))), Def(r)) => //TODO: keep this?
       for ((k,v) <- elems) {
-        var_assign(Variable(v), field(r,k)(mtype(v.tp),pos))(unwrap(v.tp),pos)
+        var_assign(Variable(v), field(r,k)(using mtype(v.tp),pos))(using unwrap(v.tp),pos)
       }
       Const(())
     case (Variable(Def(Reflect(Field(struct,idx),_,_))), rhs) =>
@@ -274,7 +274,7 @@ trait StructExpOptCommon extends StructExpOpt with VariablesExp with IfThenElseE
 
   override implicit def readVar[T:Typ](v: Var[T])(implicit pos: SourceContext): Exp[T] = v match {
     case Variable(Def(Struct(NestClassTag(tag), elems: Seq[(String,Exp[Variable[Any]])]))) =>
-      struct[T](tag, elems.map(p=>(p._1,readVar(Variable(p._2))(unwrap(p._2.tp), pos))))
+      struct[T](tag, elems.map(p=>(p._1,readVar(Variable(p._2))(using unwrap(p._2.tp), pos))))
     case Variable(Def(Field(struct,idx))) =>
       field[T](struct, idx)
     case _ => super.readVar(v)
@@ -285,7 +285,7 @@ trait StructExpOptCommon extends StructExpOpt with VariablesExp with IfThenElseE
       assert(tagA == tagB)
       val elemsNew = for (((lk,lv), (rk,rv)) <- elemsA zip elemsB) yield {
         assert(lk == rk)
-        lk -> ifThenElse(cond, Block(lv), Block(rv))(rv.tp, pos)
+        lk -> ifThenElse(cond, Block(lv), Block(rv))(using rv.tp, pos)
       }
       struct[T](tagA, elemsNew)
     case _ => super.ifThenElse(cond,a,b)
@@ -344,7 +344,7 @@ trait StructFatExpOptCommon extends StructFatExp with StructExpOptCommon with If
 
       val elemsNew = for (((lk,lv), (rk,rv)) <- elemsA zip elemsB) yield {
         assert(lk == rk)
-        lk -> phi(cond,u,lv,v,rv)(combinedResult)(mtype(lv.tp))
+        lk -> phi(cond,u,lv,v,rv)(combinedResult)(using mtype(lv.tp))
       }
       struct[T](tagA, elemsNew)
 
@@ -383,7 +383,7 @@ trait BaseGenFatStruct extends GenericFatCodegen {
         TTP(s::Nil, o::Nil, SimpleFatIfThenElse(c,a::Nil,b::Nil))
     }
 
-    val orphans = m.keys.toList.filterNot(k => e exists (_.lhs contains k)) // parent if/else might have been removed!
+    val orphans = m.keys.toList.filterNot(k => e exists (infix_lhs(_) contains k)) // parent if/else might have been removed!
 
     val r = e.flatMap {
       case TP(sym, p@Phi(c,a,u,b,v)) => Nil

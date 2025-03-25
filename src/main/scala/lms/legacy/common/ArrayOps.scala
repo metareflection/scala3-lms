@@ -60,7 +60,7 @@ trait ArrayOps extends Variables {
 trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp {
 
   implicit def arrayTyp[T:Typ]: Typ[Array[T]] = {
-    implicit val ManifestTyp(m) = typ[T]
+    implicit val ManifestTyp(m: Manifest[T]) = typ[T]
     manifestTyp
   }
 
@@ -101,7 +101,7 @@ trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp {
   def array_foreach[T:Typ](a: Exp[Array[T]], block: Exp[T] => Exp[Unit])(implicit pos: SourceContext): Exp[Unit] = {
     val x = fresh[T]
     val b = reifyEffects(block(x))
-    reflectEffect(ArrayForeach(a, x, b), summarizeEffects(b).star)
+    reflectEffect(ArrayForeach(a, x, b), infix_star(summarizeEffects(b)))
   }
   def array_copy[T:Typ](src: Exp[Array[T]], srcPos: Exp[Int], dest: Exp[Array[T]], destPos: Exp[Int], len: Exp[Int])(implicit pos: SourceContext) = reflectWrite(dest)(ArrayCopy(src,srcPos,dest,destPos,len))
   def array_unsafe_copy[T:Typ](src: Exp[Array[T]], srcPos: Exp[Int], dest: Exp[Array[T]], destPos: Exp[Int], len: Exp[Int])(implicit pos: SourceContext) = ArrayCopy(src,srcPos,dest,destPos,len)
@@ -109,7 +109,7 @@ trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp {
   def array_map[A:Typ,B:Typ](a: Exp[Array[A]], f: Exp[A] => Exp[B]) = {
     val x = fresh[A]
     val b = reifyEffects(f(x))
-    reflectEffect(ArrayMap(a, x, b), summarizeEffects(b).star)
+    reflectEffect(ArrayMap(a, x, b), infix_star(summarizeEffects(b)))
   }
   def array_toseq[A:Typ](a: Exp[Array[A]]) = ArrayToSeq(a)
   def array_slice[A:Typ](a: Rep[Array[A]], start:Rep[Int], end:Rep[Int]) = ArraySlice(a,start,end)

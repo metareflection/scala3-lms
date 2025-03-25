@@ -79,22 +79,22 @@ trait ListOpsExp extends ListOps with EffectExp with VariablesExp with BooleanOp
   def list_map[A:Typ,B:Typ](l: Exp[List[A]], f: Exp[A] => Exp[B])(implicit pos: SourceContext) = {
     val a = fresh[A]
     val b = reifyEffects(f(a))
-    reflectEffect(ListMap(l, a, b), summarizeEffects(b).star)
+    reflectEffect(ListMap(l, a, b), infix_star(summarizeEffects(b)))
   }
   def list_flatMap[A:Typ, B:Typ](l: Exp[List[A]], f: Exp[A] => Exp[List[B]])(implicit pos: SourceContext) = {
     val a = fresh[A]
     val b = reifyEffects(f(a))
-    reflectEffect(ListFlatMap(l, a, b), summarizeEffects(b).star)
+    reflectEffect(ListFlatMap(l, a, b), infix_star(summarizeEffects(b)))
   }
   def list_filter[A : Typ](l: Exp[List[A]], f: Exp[A] => Exp[Boolean])(implicit pos: SourceContext) = {
     val a = fresh[A]
     val b = reifyEffects(f(a))
-    reflectEffect(ListFilter(l, a, b), summarizeEffects(b).star)
+    reflectEffect(ListFilter(l, a, b), infix_star(summarizeEffects(b)))
   }
   def list_sortby[A:Typ,B:Typ:Ordering](l: Exp[List[A]], f: Exp[A] => Exp[B])(implicit pos: SourceContext) = {
     val a = fresh[A]
     val b = reifyEffects(f(a))
-    reflectEffect(ListSortBy(l, a, b), summarizeEffects(b).star)
+    reflectEffect(ListSortBy(l, a, b), infix_star(summarizeEffects(b)))
   }
   def list_toarray[A:Typ](l: Exp[List[A]])(implicit pos: SourceContext) = ListToArray(l)
   def list_toseq[A:Typ](l: Exp[List[A]])(implicit pos: SourceContext) = ListToSeq(l)

@@ -95,7 +95,7 @@ trait SimplifyTransform extends internal.FatScheduling {
   // TODO: generalize, abstract out SimpleFatXX types
   def transformAll(scope: List[Stm], t: SubstTransformer): List[Stm] = {
     val scopeIndex = new java.util.IdentityHashMap[Sym[Any],Stm]
-    for (stm <- scope; s <- stm.lhs) scopeIndex.put(s,stm)    
+    for (stm <- scope; s <- stm) scopeIndex.put(s,stm)    
 
     scope flatMap {
       case TP(sym, rhs) =>
@@ -192,7 +192,7 @@ trait SimplifyTransform extends internal.FatScheduling {
       val save = context
       context = Nil
       val scope = body
-      val leftovereffects = context.filterNot((scope.flatMap(_.lhs)) contains _)
+      val leftovereffects = context.filterNot((scope.flatMap(infix_lhs(_))) contains _)
       if (leftovereffects.nonEmpty) 
         printlog("warning: transformation left effect context (will be discarded): "+leftovereffects)
       context = save

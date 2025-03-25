@@ -29,7 +29,7 @@ trait StaticDataExp extends EffectExp {
   }
   
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case StaticData(x) => staticData(x)(mtyp1[A])
+    case StaticData(x) => staticData(x)(using mtyp1[A])
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]   
 }
@@ -83,8 +83,8 @@ trait CGenStaticData extends CGenEffect with BaseGenStaticData {
       emitValDef(sym, /*"p"+quote(sym)*/ (x match { 
         case x: Array[a] => 
           val tp = sym.tp.typeArguments(0).asInstanceOf[Typ[a]]
-          "("+remap(tp)+"[]){"+x.map(v=>quote(Const(v)(tp))).mkString(",")+"}" 
-        case _ => quote(Const(x)(sym.tp))
+          "("+remap(tp)+"[]){"+x.map(v=>quote(Const(v)(using tp))).mkString(",")+"}" 
+        case _ => quote(Const(x)(using sym.tp))
       }))
     case _ => super.emitNode(sym, rhs)
   }
