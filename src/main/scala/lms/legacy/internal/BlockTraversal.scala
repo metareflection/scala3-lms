@@ -123,7 +123,7 @@ trait NestedBlockTraversal extends BlockTraversal with NestedGraphTraversal {
 
   // ----- reset
 
-  override def reset { // used anywhere?
+  override def reset: Unit = { // used anywhere?
     innerScope = null
     //shallow = false
     IR.reset

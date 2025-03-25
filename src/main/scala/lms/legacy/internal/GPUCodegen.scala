@@ -3,7 +3,6 @@ package internal
 
 import java.io.{StringWriter, PrintWriter, File}
 import collection.immutable.List._
-import scala.reflect.SourceContext
 import collection.mutable.{HashMap, HashSet, ArrayBuffer, ListMap, ListBuffer}
 
 trait GPUCodegen extends CLikeCodegen with AbstractHostTransfer with AbstractDeviceTransfer {
@@ -127,7 +126,7 @@ trait GPUCodegen extends CLikeCodegen with AbstractHostTransfer with AbstractDev
     typesStream.flush
   }
 
-  override def emitTransferFunctions() {    
+  override def emitTransferFunctions(): Unit = {    
     for ((tp,name) <- dsTypesList) {
       // Emit input copy helper functions for object type inputs
       //TODO: For now just iterate over all possible hosts, but later we can pick one depending on the input target
@@ -207,7 +206,7 @@ trait GPUCodegen extends CLikeCodegen with AbstractHostTransfer with AbstractDev
     headerStream.flush
   }
 
-  def registerKernel(syms: List[Sym[Any]]) {
+  def registerKernel(syms: List[Sym[Any]]): Unit = {
     isGPUable = true
     if(kernelsList.intersect(syms).isEmpty) {
       //headerStream.println("#include \"%s.%s\"".format(syms.map(quote).mkString(""),kernelFileExt))
@@ -215,7 +214,7 @@ trait GPUCodegen extends CLikeCodegen with AbstractHostTransfer with AbstractDev
     }
   }
 
-  def checkGPUAlloc(sym: Sym[Any]) {
+  def checkGPUAlloc(sym: Sym[Any]): Unit = {
     if(!processingHelperFunc) {
       if (isNestedNode) {
         printDebug(sym, "Code has nested memory allocations (not supported by current Delite GPU code generator). Try manually unrolling the outer loop.")
@@ -227,7 +226,7 @@ trait GPUCodegen extends CLikeCodegen with AbstractHostTransfer with AbstractDev
     }
   }
 
-  def printDebug(sym: Sym[Any], msg: String) {
+  def printDebug(sym: Sym[Any], msg: String): Unit = {
     def getFirstStack(cs: SourceContext): SourceContext = cs.parent match {
       case None => cs
       case Some(p) => getFirstStack(p)

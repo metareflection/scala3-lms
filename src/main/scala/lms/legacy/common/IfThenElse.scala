@@ -2,7 +2,6 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
 import scala.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
 
 trait IfThenElse extends Base {
@@ -387,7 +386,7 @@ trait CGenIfThenElse extends CGenEffect with BaseGenIfThenElse {
             if (cppIfElseAutoRet == "true") {
               val ten = quote(sym) + "True"
               val fen = quote(sym) + "False"
-              def emitCondFun[T](fname: String, block: Block[T]) {
+              def emitCondFun[T](fname: String, block: Block[T]): Unit =  {
                 stream.println("auto " + fname + " = [&]() {");
                 emitBlock(block)
                 stream.println("return " + quote(getBlockResult(block)) + ";")

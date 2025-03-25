@@ -4,7 +4,7 @@ package internal
 import util.GraphUtil
 import scala.collection.mutable
 import java.util.IdentityHashMap
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 trait Scheduling {
   val IR: Expressions
@@ -40,7 +40,7 @@ trait Scheduling {
     xx.foreach { x => 
       if (x.length > 1) {
         printerr("warning: recursive schedule for result " + result + ": " + x)
-        (new Exception) printStackTrace
+        (new Exception).printStackTrace()
       }
     }
     xx.flatten.reverse
@@ -84,7 +84,7 @@ trait Scheduling {
     if (sort) xx.foreach { x => 
       if (x.length > 1) {
         printerr("warning: recursive schedule for result " + result + ": " + x)
-        (new Exception) printStackTrace
+        (new Exception).printStackTrace()
       }
     }
     xx.flatten.reverse
@@ -146,7 +146,7 @@ trait Scheduling {
       //map.getOrElse(s, Nil) match {
       res match {
         case `d`::ds =>
-        case ds => map.update(s,d::ds) //map.put(s,d::ds)
+        case ds => map.asScala.update(s,d::ds) //map.put(s,d::ds)
       }
     }
     
@@ -154,7 +154,7 @@ trait Scheduling {
       var res = map(s) //map.get(s)
       if (res == null) {
         res = Set[Stm]()
-        map.update(s,res) //map.put(s,res)
+        map.asScala.update(s,res) //map.put(s,res)
       }
       res += d
     }

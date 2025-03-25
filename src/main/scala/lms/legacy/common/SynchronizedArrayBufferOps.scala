@@ -4,7 +4,6 @@ package common
 import java.io.PrintWriter
 import scala.lms.internal.GenericNestedCodegen
 import collection.mutable.ArrayBuffer
-import scala.reflect.SourceContext
 
 trait SynchronizedArrayBufferOps extends ArrayBufferOps {
 

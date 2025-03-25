@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import internal._
-import scala.reflect.SourceContext
 
 trait LiftArrays { 
   this: ArrayOps =>
@@ -22,9 +21,9 @@ trait ArrayOps extends Variables {
 
   // multiple definitions needed because implicits won't chain
   // not using infix here because apply doesn't work with infix methods
-  implicit def varToArrayOps[T:Typ](x: Var[Array[T]]) = new ArrayOpsCls(readVar(x))
-  implicit def repArrayToArrayOps[T:Typ](a: Rep[Array[T]]) = new ArrayOpsCls(a)
-  implicit def arrayToArrayOps[T:Typ](a: Array[T]) = new ArrayOpsCls(unit(a))
+  implicit def varToArrayOps[T:Typ](x: Var[Array[T]]): ArrayOpsCls[T] = new ArrayOpsCls(readVar(x))
+  implicit def repArrayToArrayOps[T:Typ](a: Rep[Array[T]]): ArrayOpsCls[T] = new ArrayOpsCls(a)
+  implicit def arrayToArrayOps[T:Typ](a: Array[T]): ArrayOpsCls[T] = new ArrayOpsCls(unit(a))
 
   // substitution for "new Array[T](...)"
   // TODO: look into overriding __new for arrays

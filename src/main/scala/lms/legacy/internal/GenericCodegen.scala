@@ -38,7 +38,7 @@ trait GenericCodegen extends BlockTraversal {
     dataPath + sym.id
   }
  
-  def emitData(sym: Sym[Any], data: Seq[Any]) {
+  def emitData(sym: Sym[Any], data: Seq[Any]): Unit = {
     val outDir = new File(dataPath)
     outDir.mkdirs()
     val outFile = new File(symDataPath(sym))
@@ -171,7 +171,7 @@ trait GenericCodegen extends BlockTraversal {
   
   // ----------
   
-  override def reset {
+  override def reset: Unit = {
     stream = null
     super.reset
   }

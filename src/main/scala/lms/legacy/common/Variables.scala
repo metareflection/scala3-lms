@@ -2,9 +2,7 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
 import scala.lms.util.OverloadHack
-import scala.reflect.SourceContext
 
 trait LiftVariables extends Base {
   this: Variables =>

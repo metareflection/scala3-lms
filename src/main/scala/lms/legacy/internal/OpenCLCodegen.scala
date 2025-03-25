@@ -67,10 +67,9 @@ trait OpenCLCodegen extends GPUCodegen with CppHostTransfer with OpenCLDeviceTra
 trait OpenCLNestedCodegen extends CLikeNestedCodegen with OpenCLCodegen {
   val IR: Expressions with Effects
   import IR._
-  
 }
 
 trait OpenCLFatCodegen extends CLikeFatCodegen with OpenCLCodegen {
   val IR: Expressions with Effects with FatExpressions
-	import IR._
+  import IR._
 }

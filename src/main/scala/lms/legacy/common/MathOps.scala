@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import internal.{GenericNestedCodegen}
-import scala.reflect.SourceContext
 
 trait MathOps extends Base with PrimitiveOps {
 

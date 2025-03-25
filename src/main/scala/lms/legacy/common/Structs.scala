@@ -1,14 +1,12 @@
 package scala.lms
 package common
 
-import reflect.{SourceContext, RefinedManifest}
 import util.OverloadHack
 import java.io.PrintWriter
 import internal.{GenericNestedCodegen, GenericFatCodegen}
 
-abstract class Record extends Struct
-
 trait StructOps extends Base {
+  abstract class Record extends Struct
 
   implicit def recordTyp[T<:Record:Manifest]: Typ[T]
 
@@ -196,7 +194,7 @@ trait StructExp extends StructOps with StructTags with BaseExp with EffectExp wi
     case _ => super.object_tostring(x)
   }
 
-  def registerStruct[T](name: String, elems: Seq[(String, Rep[Any])]) {
+  def registerStruct[T](name: String, elems: Seq[(String, Rep[Any])]): Unit = {
     encounteredStructs += name -> elems.map(e => (e._1, e._2.tp))
   }
   val encounteredStructs = new scala.collection.mutable.HashMap[String, Seq[(String, Typ[_])]]
@@ -437,7 +435,7 @@ trait ScalaGenStruct extends ScalaGenBase with BaseGenStruct {
     case _ => super.remap(m)
   }
 
-  override def emitDataStructures(stream: PrintWriter) {
+  override def emitDataStructures(stream: PrintWriter): Unit = {
     for ((name, elems) <- encounteredStructs) {
       stream.println()
       stream.print("case class " + name + "(")

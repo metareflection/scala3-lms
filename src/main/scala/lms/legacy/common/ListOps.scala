@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import scala.lms.internal.GenericNestedCodegen
-import scala.reflect.SourceContext
 
 trait ListOps extends Variables {
 

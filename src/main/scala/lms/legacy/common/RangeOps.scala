@@ -4,7 +4,6 @@ package common
 import java.io.PrintWriter
 
 import scala.lms.internal.{GenericNestedCodegen, GenerationFailedException}
-import scala.reflect.SourceContext
 
 trait RangeOps extends Base {
   implicit def rangeTyp: Typ[Range]

@@ -2,7 +2,6 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
 
 trait LiftBoolean {
   this: Base =>

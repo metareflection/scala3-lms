@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import internal._
-import scala.reflect.SourceContext
 
 trait SeqOps extends Variables {
 

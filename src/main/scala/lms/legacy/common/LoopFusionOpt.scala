@@ -325,7 +325,7 @@ trait LoopFusionCore extends internal.FatScheduling with CodeMotion with Simplif
         }.distinct      
 
         // transitive closure of negative dependencies
-        def iter {
+        def iter: Unit = {
           val oldNeg = WtableNeg
           val delta = WtableNeg flatMap { p => WtableNeg collect { case q if p._2 == q._1 => (p._1, q._2) }}
           WtableNeg = (WtableNeg ++ delta).distinct

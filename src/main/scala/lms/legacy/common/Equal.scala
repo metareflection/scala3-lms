@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import scala.lms.util.OverloadHack
-import scala.reflect.SourceContext
 
 trait LiftEquals extends Base {
   this: Equal =>

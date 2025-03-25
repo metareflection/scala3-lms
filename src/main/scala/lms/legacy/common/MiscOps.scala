@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import scala.lms.internal._
-import scala.reflect.SourceContext
 
 trait MiscOps extends Base with PrimitiveOps with StringOps {
   /**

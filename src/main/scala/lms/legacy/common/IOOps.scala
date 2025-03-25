@@ -4,7 +4,6 @@ package common
 import java.io.{File, FileReader, FileWriter, BufferedReader, BufferedWriter, PrintWriter}
 import scala.lms.internal.{GenerationFailedException}
 import util.OverloadHack
-import scala.reflect.SourceContext
 
 // TODO: fine grained effects
 

@@ -1,7 +1,6 @@
 package scala.lms
 package internal
 
-import scala.reflect.SourceContext
 import util.GraphUtil
 import scala.collection.mutable
 import scala.annotation.unchecked.uncheckedVariance
@@ -379,7 +378,7 @@ trait Effects extends Expressions with Blocks with Utils {
     }
   }
 
-  def checkIllegalSharing(z: Exp[Any], mutableAliases: List[Sym[Any]]) {
+  def checkIllegalSharing(z: Exp[Any], mutableAliases: List[Sym[Any]]): Unit = {
     if (mutableAliases.nonEmpty) {
       val zd = z match { case Def(zd) => zd }
       printerr("error: illegal sharing of mutable objects " + mutableAliases.mkString(", "))
@@ -532,7 +531,7 @@ trait Effects extends Expressions with Blocks with Utils {
     s
   }
   
-  def checkContext() {
+  def checkContext(): Unit = {
     if (context == null)
       sys.error("uninitialized effect context: effectful statements may only be used within a reifyEffects { .. } block")
   }

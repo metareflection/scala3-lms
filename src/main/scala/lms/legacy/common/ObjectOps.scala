@@ -4,7 +4,6 @@ package common
 import java.io.PrintWriter
 import scala.lms.util.OverloadHack
 import scala.lms.internal.{GenerationFailedException}
-import scala.reflect.SourceContext
 
 trait ObjectOps extends Variables with StringOps with OverloadHack {
   def infix_toString(lhs: Rep[Any])(implicit pos: SourceContext) = object_tostring(lhs)

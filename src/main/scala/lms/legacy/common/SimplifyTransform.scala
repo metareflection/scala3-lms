@@ -1,9 +1,6 @@
 package scala.lms
 package common
 
-import scala.reflect.SourceContext
-
-
 trait SimplifyTransform extends internal.FatScheduling {
   val IR: LoopsFatExp with IfThenElseFatExp
   import IR._

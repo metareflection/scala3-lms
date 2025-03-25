@@ -2,11 +2,9 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
 import scala.collection.mutable.ArrayBuffer
 import scala.lms.internal.GenericNestedCodegen
 import collection.mutable.ArrayBuffer
-import scala.reflect.SourceContext
 
 trait ArrayBufferOps extends Base with StringOps with ArrayOps {
 
@@ -17,7 +15,7 @@ trait ArrayBufferOps extends Base with StringOps with ArrayOps {
   implicit def arrayBufferTyp[T:Typ]: Typ[ArrayBuffer[T]]
   implicit def seqTyp[T:Typ]: Typ[Seq[T]] // TODO: remove?
 
-  implicit def repToArrayBufferOps[A:Typ](l: Rep[ArrayBuffer[A]]) = new ArrayBufferOpsCls(l)
+  implicit def repToArrayBufferOps[A:Typ](l: Rep[ArrayBuffer[A]]): ArrayBufferOpsCls[?] = new ArrayBufferOpsCls(l)
   
   class ArrayBufferOpsCls[A:Typ](l: Rep[ArrayBuffer[A]]) {
     def +=(e: Rep[A])(implicit pos: SourceContext) = arraybuffer_append(l,e)
@@ -55,7 +53,7 @@ trait ArrayBufferOps extends Base with StringOps with ArrayOps {
 
 trait ArrayBufferOpsExp extends ArrayBufferOps with EffectExp {
   implicit def arrayBufferTyp[T:Typ]: Typ[ArrayBuffer[T]] = {
-    implicit val ManifestTyp(m) = typ[T]
+    implicit val ManifestTyp(m: Manifest[T]) = typ[T]
     manifestTyp
   }
   
@@ -83,8 +81,7 @@ trait ArrayBufferOpsExp extends ArrayBufferOps with EffectExp {
   // mirroring
 
   override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
-    case ArrayBufferMkString(l,r) => ArrayBufferMkString(f(l),f(r))(
-      mtyp1[A])
+    case ArrayBufferMkString(l,r) => ArrayBufferMkString(f(l),f(r))(mtyp1[A])
     case ArrayBufferAppend(l,r) => ArrayBufferAppend(f(l),f(r))(mtyp1[A])
     case ArrayBufferAppendArray(l,r) => ArrayBufferAppendArray(f(l),f(r))(mtyp1[A])
     case ArrayBufferAppendSeq(l,r) => ArrayBufferAppendSeq(f(l),f(r))(mtyp1[A])

@@ -2,7 +2,6 @@ package scala.lms
 package common
 
 import internal._
-import scala.reflect.SourceContext
 
 /**
  * This trait automatically lifts any concrete instance to a representation.
@@ -31,8 +30,8 @@ trait Base extends EmbeddedControls {
   def typ[T:Typ]: Typ[T]
 
   // always lift Unit and Null (for now)
-  implicit def unitToRepUnit(x: Unit) = unit(x)
-  implicit def nullToRepNull(x: Null) = unit(x)
+  implicit def unitToRepUnit(x: Unit): Rep[Unit] = unit(x)
+  implicit def nullToRepNull(x: Null): Rep[Null] = unit(x)
 }
 
 /**

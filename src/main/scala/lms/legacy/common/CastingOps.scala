@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import scala.lms.util.OverloadHack
-import scala.reflect.SourceContext
 
 trait CastingOps extends Variables with OverloadHack {
   this: ImplicitOps =>

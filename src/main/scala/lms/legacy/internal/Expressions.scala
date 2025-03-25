@@ -1,7 +1,6 @@
 package scala.lms
 package internal
 
-import scala.reflect.SourceContext
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable.ListBuffer
 import java.lang.{StackTraceElement,Thread}
@@ -280,7 +279,7 @@ trait Expressions extends Utils {
 
   // bookkeeping
 
-  def reset { // used by delite?
+  def reset: Unit = { // used by delite?
     nVars = 0
     globalDefs = Nil
     localDefs = Nil

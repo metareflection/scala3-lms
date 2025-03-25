@@ -25,7 +25,7 @@ trait ScalaCompile extends Expressions {
       val writer = new PrintWriter(new OutputStreamWriter(output))
     */
     val settings = new Settings()
-	val pathSeparator = System.getProperty("path.separator")
+    val pathSeparator = System.getProperty("path.separator")
 
     settings.classpath.value = this.getClass.getClassLoader match {
       case ctx: java.net.URLClassLoader => ctx.getURLs.map(_.getPath).mkString(pathSeparator)

@@ -6,8 +6,6 @@ import java.io.PrintWriter
 import scala.lms.internal.{GenericNestedCodegen, GenerationFailedException}
 import scala.lms.util.ClosureCompare
 
-import scala.reflect.SourceContext
-
 trait Functions extends Base {
 
   implicit def funTyp[A:Typ,B:Typ]: Typ[A => B]
@@ -376,7 +374,7 @@ trait CGenFunctions extends CGenEffect with BaseGenFunctions {
       val retType = remap(getBlockResult(y).tp)
       val retTp = if (cppExplicitFunRet == "true") "function<"+retType+"("+remap(x.tp)+")>" else "auto"
       stream.println(retTp+" "+quote(sym)+
-    		  " = [&]("+remap(x.tp)+" "+quote(x)+") {")
+        " = [&]("+remap(x.tp)+" "+quote(x)+") {")
       emitBlock(y)
       val z = getBlockResult(y)
       if (retType != "void")
@@ -404,7 +402,7 @@ trait CGenTupledFunctions extends CGenFunctions with GenericGenUnboxedTupleAcces
       val retType = remap(getBlockResult(y).tp)
       val retTp = if (cppExplicitFunRet == "true") "function<"+retType+"("+xs.map(s=>remap(s.tp)).mkString(",")+")>" else "auto"
       stream.println(retTp+" "+quote(sym)+
-    		  " = [&]("+xs.map(s=>remap(s.tp)+" "+quote(s)).mkString(",")+") {")
+        " = [&]("+xs.map(s=>remap(s.tp)+" "+quote(s)).mkString(",")+") {")
       emitBlock(y)
       val z = getBlockResult(y)
       if (retType != "void")

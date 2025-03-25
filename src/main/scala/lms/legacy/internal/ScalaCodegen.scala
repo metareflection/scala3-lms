@@ -3,8 +3,6 @@ package internal
 
 import java.io.{File, FileWriter, PrintWriter}
 
-import scala.reflect.SourceContext
-
 trait ScalaCodegen extends GenericCodegen with Config {
   val IR: Expressions
   import IR._
@@ -51,7 +49,7 @@ trait ScalaCodegen extends GenericCodegen with Config {
     staticData
   }
 
-  override def emitFileHeader() {
+  override def emitFileHeader(): Unit = {
     // empty by default. override to emit package or import declarations.
   }
 

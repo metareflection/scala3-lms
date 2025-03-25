@@ -3,7 +3,6 @@ package common
 
 import scala.lms.internal.GenericCodegen
 import java.io.PrintWriter
-import scala.reflect.SourceContext
 
 trait TupleOps extends Base {
   implicit def tuple2_typ[A:Typ,B:Typ]: Typ[(A,B)]

@@ -4,7 +4,6 @@ package common
 import java.io.PrintWriter
 import scala.lms.internal._
 import scala.collection.mutable.Set
-import scala.reflect.SourceContext
 
 trait SetOps extends Base {
   implicit def setTyp[T:Typ]: Typ[Set[T]]

@@ -1,5 +1,5 @@
 package scala.lms
-package internal
+  package internal
 
 import java.io.{FileWriter, PrintWriter, File}
 import collection.immutable.List._
@@ -140,7 +140,7 @@ trait CCodegen extends CLikeCodegen with CppHostTransfer {
     Nil
   }  
 
-  override def emitTransferFunctions() {
+  override def emitTransferFunctions(): Unit = {
 
     for ((tp,name) <- dsTypesList) {
       try {

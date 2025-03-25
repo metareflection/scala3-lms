@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import scala.lms.util.OverloadHack
-import scala.reflect.SourceContext
 
 trait OrderingOps extends Base with Variables with BooleanOps with PrimitiveOps with OverloadHack {
   // workaround for infix not working with implicits in PrimitiveOps

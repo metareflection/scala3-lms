@@ -3,7 +3,6 @@ package common
 
 import java.io.PrintWriter
 import scala.lms.internal.GenericNestedCodegen
-import scala.reflect.SourceContext
 
 trait While extends Base {
   def __whileDo(cond: => Rep[Boolean], body: => Rep[Unit])(implicit pos: SourceContext): Rep[Unit]

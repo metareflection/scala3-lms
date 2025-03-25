@@ -63,13 +63,13 @@ object GraphUtil {
       if (min == mark.get(node)) {
         var scc: List[T] = Nil
         var loop: Boolean = true
-        do {
+        while {
           val element = stack.removeFirst()
-//        println("appending " + element)
           scc ::= element
           mark.put(element, Integer.MAX_VALUE)
           loop = element != node
-        } while (loop)
+          loop
+        } do ()
         res.value ::= scc
       }
       min
