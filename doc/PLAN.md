@@ -17,3 +17,7 @@ that and generate the code much more directly.
 
 - vendor EmbeddedControls
 - alias `Manifest` and `RefinedManifest` to `ClassTag[T]`
+
+## Manual fixes
+
+- tree-smashed `using` into sveral places (-rewrite suggested but broken)
