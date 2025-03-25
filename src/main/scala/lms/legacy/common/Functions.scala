@@ -206,7 +206,7 @@ trait TupledFunctionsExp extends TupledFunctions with FunctionsExp with TupleOps
   }
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case e@Lambda(g,UnboxedTuple(xs),y:Block[b]) => toAtom(Lambda(f(g),UnboxedTuple(f(xs))(e.mA),f(y))(e.mA,e.mB))(mtyp1[A],implicitly[SourceContext])
+    case e@Lambda(g,UnboxedTuple(xs),y:Block[b]) => toAtom(Lambda(f(g),UnboxedTuple(f(xs))(using e.mA),f(y))(using e.mA,e.mB))(using mtyp1[A],implicitly[SourceContext])
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 }
