@@ -12,9 +12,9 @@ trait ListOps extends Variables {
     def apply[A:Typ](xs: Rep[A]*)(implicit pos: SourceContext) = list_new(xs)
   }
 
-  implicit def varToListOps[T:Typ](x: Var[List[T]]) = new ListOpsCls(readVar(x)) // FIXME: dep on var is not nice
-  implicit def repToListOps[T:Typ](a: Rep[List[T]]) = new ListOpsCls(a)
-  implicit def listToListOps[T:Typ](a: List[T]) = new ListOpsCls(unit(a))
+  implicit def varToListOps[T:Typ](x: Var[List[T]]): ListOpsCls[T] = new ListOpsCls(readVar(x)) // FIXME: dep on var is not nice
+  implicit def repToListOps[T:Typ](a: Rep[List[T]]): ListOpsCls[T] = new ListOpsCls(a)
+  implicit def listToListOps[T:Typ](a: List[T]): ListOpsCls[T] = new ListOpsCls(unit(a))
   
   class ListOpsCls[A:Typ](l: Rep[List[A]]) {
     def map[B:Typ](f: Rep[A] => Rep[B]) = list_map(l,f)
@@ -52,7 +52,7 @@ trait ListOps extends Variables {
 
 trait ListOpsExp extends ListOps with EffectExp with VariablesExp with BooleanOpsExp with ArrayOpsExp with StringOpsExp {
   implicit def listTyp[T:Typ]: Typ[List[T]] = {
-    implicit val ManifestTyp(m) = typ[T]
+    implicit val ManifestTyp(m: Manifest[T]) = typ[T]
     manifestTyp
   }
   case class ListNew[A:Typ](xs: Seq[Rep[A]]) extends Def[List[A]] {
@@ -108,7 +108,7 @@ trait ListOpsExp extends ListOps with EffectExp with VariablesExp with BooleanOp
   def list_isEmpty[A:Typ](xs: Rep[List[A]])(implicit pos: SourceContext) = ListIsEmpty(xs)
   
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case e@ListNew(xs) => list_new(f(xs))(e.mA,pos)
+    case e@ListNew(xs) => list_new(f(xs))(using e.mA,pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]] // why??
   
