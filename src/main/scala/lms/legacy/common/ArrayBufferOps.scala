@@ -81,10 +81,10 @@ trait ArrayBufferOpsExp extends ArrayBufferOps with EffectExp {
   // mirroring
 
   override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
-    case ArrayBufferMkString(l,r) => ArrayBufferMkString(f(l),f(r))(mtyp1[A])
-    case ArrayBufferAppend(l,r) => ArrayBufferAppend(f(l),f(r))(mtyp1[A])
-    case ArrayBufferAppendArray(l,r) => ArrayBufferAppendArray(f(l),f(r))(mtyp1[A])
-    case ArrayBufferAppendSeq(l,r) => ArrayBufferAppendSeq(f(l),f(r))(mtyp1[A])
+    case ArrayBufferMkString(l,r) => ArrayBufferMkString(f(l),f(r))(using mtyp1[A])
+    case ArrayBufferAppend(l,r) => ArrayBufferAppend(f(l),f(r))(using mtyp1[A])
+    case ArrayBufferAppendArray(l,r) => ArrayBufferAppendArray(f(l),f(r))(using mtyp1[A])
+    case ArrayBufferAppendSeq(l,r) => ArrayBufferAppendSeq(f(l),f(r))(using mtyp1[A])
     case _ => super.mirrorDef(e,f)
   }).asInstanceOf[Def[A]] // why??
   

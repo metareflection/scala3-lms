@@ -53,14 +53,14 @@ trait EqualExpBridge extends BaseExp with BooleanOpsExp {
   def notequals[A:Typ,B:Typ](a: Rep[A], b: Rep[B])(implicit pos: SourceContext): Rep[Boolean] = NotEqual(a,b)
 
   override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
-    case e@Equal(a, b) => Equal(f(a),f(b))(e.mA,e.mB)
-    case e@NotEqual(a, b) => NotEqual(f(a),f(b))(e.mA,e.mB)
+    case e@Equal(a, b) => Equal(f(a),f(b))(using e.mA,e.mB)
+    case e@NotEqual(a, b) => NotEqual(f(a),f(b))(using e.mA,e.mB)
     case _ => super.mirrorDef(e,f)
   }).asInstanceOf[Def[A]]
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case e@Equal(a, b) => equals(f(a),f(b))(e.mA,e.mB,pos)
-    case e@NotEqual(a, b) => notequals(f(a),f(b))(e.mA,e.mB,pos)
+    case e@Equal(a, b) => equals(f(a),f(b))(using e.mA,e.mB,pos)
+    case e@NotEqual(a, b) => notequals(f(a),f(b))(using e.mA,e.mB,pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 

@@ -156,7 +156,7 @@ trait TupledFunctionsExp extends TupledFunctions with FunctionsExp with TupleOps
   override def unboxedFresh[A:Typ] : Exp[A] = {
     val mA = typ[A]
     if (mA == typ[Unit] || tupledTyp(mA))
-      UnboxedTuple[A](mA.typeArguments.map(fresh(_)))
+      UnboxedTuple[A](mA.typeArguments.map(fresh(using _)))
     else fresh[A]
   }
 
@@ -169,32 +169,32 @@ trait TupledFunctionsExp extends TupledFunctions with FunctionsExp with TupleOps
       case _ if tupledTypOf(mA, 2) =>
         x match { case t : Rep[(a1,a2)] =>
           UnboxedTuple[A](List(
-            tuple2_get1(t)(mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
-            tuple2_get2(t)(mA.typeArguments(1).asInstanceOf[Typ[a2]], pos)))
+            tuple2_get1(t)(using mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
+            tuple2_get2(t)(using mA.typeArguments(1).asInstanceOf[Typ[a2]], pos)))
         }
       case _ if tupledTypOf(mA, 3) =>
         x match { case t : Rep[(a1,a2,a3)] =>
           UnboxedTuple[A](List(
-            tuple3_get1(t)(mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
-            tuple3_get2(t)(mA.typeArguments(1).asInstanceOf[Typ[a2]], pos),
-            tuple3_get3(t)(mA.typeArguments(2).asInstanceOf[Typ[a3]], pos)))
+            tuple3_get1(t)(using mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
+            tuple3_get2(t)(using mA.typeArguments(1).asInstanceOf[Typ[a2]], pos),
+            tuple3_get3(t)(using mA.typeArguments(2).asInstanceOf[Typ[a3]], pos)))
         }
       case _ if tupledTypOf(mA, 4) =>
         x match { case t : Rep[(a1,a2,a3,a4)] =>
           UnboxedTuple[A](List(
-            tuple4_get1(t)(mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
-            tuple4_get2(t)(mA.typeArguments(1).asInstanceOf[Typ[a2]], pos),
-            tuple4_get3(t)(mA.typeArguments(2).asInstanceOf[Typ[a3]], pos),
-            tuple4_get4(t)(mA.typeArguments(3).asInstanceOf[Typ[a4]], pos)))
+            tuple4_get1(t)(using mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
+            tuple4_get2(t)(using mA.typeArguments(1).asInstanceOf[Typ[a2]], pos),
+            tuple4_get3(t)(using mA.typeArguments(2).asInstanceOf[Typ[a3]], pos),
+            tuple4_get4(t)(using mA.typeArguments(3).asInstanceOf[Typ[a4]], pos)))
         }
       case _ if tupledTypOf(mA, 5) =>
         x match { case t : Rep[(a1,a2,a3,a4,a5)] =>
           UnboxedTuple[A](List(
-            tuple5_get1(t)(mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
-            tuple5_get2(t)(mA.typeArguments(1).asInstanceOf[Typ[a2]], pos),
-            tuple5_get3(t)(mA.typeArguments(2).asInstanceOf[Typ[a3]], pos),
-            tuple5_get4(t)(mA.typeArguments(3).asInstanceOf[Typ[a4]], pos),
-            tuple5_get5(t)(mA.typeArguments(4).asInstanceOf[Typ[a5]], pos)))
+            tuple5_get1(t)(using mA.typeArguments(0).asInstanceOf[Typ[a1]], pos),
+            tuple5_get2(t)(using mA.typeArguments(1).asInstanceOf[Typ[a2]], pos),
+            tuple5_get3(t)(using mA.typeArguments(2).asInstanceOf[Typ[a3]], pos),
+            tuple5_get4(t)(using mA.typeArguments(3).asInstanceOf[Typ[a4]], pos),
+            tuple5_get5(t)(using mA.typeArguments(4).asInstanceOf[Typ[a5]], pos)))
         }
       case _ => x
     }

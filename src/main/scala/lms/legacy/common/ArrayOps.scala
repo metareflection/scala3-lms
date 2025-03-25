@@ -118,16 +118,16 @@ trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp {
   // mirroring
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case ArrayApply(a,x) => array_apply(f(a),f(x))(mtyp1[A],pos)
-    case ArrayLength(x) => array_length(f(x))(mtyp1[A],pos)
-    case e@ArraySort(x) => array_sort(f(x))(mtyp1[A],pos)
-    case e@ArrayCopy(a,ap,d,dp,l) => array_copy(f(a),f(ap),f(d),f(dp),f(l))(mtyp1[A],pos)
-    case Reflect(e@ArrayNew(n), u, es) => reflectMirrored(Reflect(ArrayNew(f(n))(e.m), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@ArrayLength(x), u, es) => reflectMirrored(Reflect(ArrayLength(f(x))(e.m), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@ArrayApply(l,r), u, es) => reflectMirrored(Reflect(ArrayApply(f(l),f(r))(e.m), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@ArraySort(x), u, es) => reflectMirrored(Reflect(ArraySort(f(x))(e.m), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@ArrayUpdate(l,i,r), u, es) => reflectMirrored(Reflect(ArrayUpdate(f(l),f(i),f(r))(e.m), mapOver(f,u), f(es)))(mtyp1[A], pos)
-    case Reflect(e@ArrayCopy(a,ap,d,dp,l), u, es) => reflectMirrored(Reflect(ArrayCopy(f(a),f(ap),f(d),f(dp),f(l))(e.m), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case ArrayApply(a,x) => array_apply(f(a),f(x))(using mtyp1[A],pos)
+    case ArrayLength(x) => array_length(f(x))(using mtyp1[A],pos)
+    case e@ArraySort(x) => array_sort(f(x))(using mtyp1[A],pos)
+    case e@ArrayCopy(a,ap,d,dp,l) => array_copy(f(a),f(ap),f(d),f(dp),f(l))(using mtyp1[A],pos)
+    case Reflect(e@ArrayNew(n), u, es) => reflectMirrored(Reflect(ArrayNew(f(n))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@ArrayLength(x), u, es) => reflectMirrored(Reflect(ArrayLength(f(x))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@ArrayApply(l,r), u, es) => reflectMirrored(Reflect(ArrayApply(f(l),f(r))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@ArraySort(x), u, es) => reflectMirrored(Reflect(ArraySort(f(x))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@ArrayUpdate(l,i,r), u, es) => reflectMirrored(Reflect(ArrayUpdate(f(l),f(i),f(r))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
+    case Reflect(e@ArrayCopy(a,ap,d,dp,l), u, es) => reflectMirrored(Reflect(ArrayCopy(f(a),f(ap),f(d),f(dp),f(l))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]] // why??
 

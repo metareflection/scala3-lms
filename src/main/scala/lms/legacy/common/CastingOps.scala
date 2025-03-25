@@ -27,11 +27,11 @@ trait CastingOpsExp extends CastingOps with BaseExp with EffectExp with BooleanO
   case class RepAsInstanceOf[A,B:Typ](lhs: Exp[A], mA: Typ[A], mB: Typ[B]) extends Def[B]
 
   def rep_isinstanceof[A,B](lhs: Exp[A], mA: Typ[A], mB: Typ[B])(implicit pos: SourceContext) = RepIsInstanceOf(lhs,mA,mB)
-  def rep_asinstanceof[A,B:Typ](lhs: Exp[A], mA: Typ[A], mB: Typ[B])(implicit pos: SourceContext) : Exp[B] = toAtom(RepAsInstanceOf(lhs,mA,mB))(mB,pos)
+  def rep_asinstanceof[A,B:Typ](lhs: Exp[A], mA: Typ[A], mB: Typ[B])(implicit pos: SourceContext) : Exp[B] = toAtom(RepAsInstanceOf(lhs,mA,mB))(using mB,pos)
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case RepAsInstanceOf(lhs, mA, mB) => rep_asinstanceof(f(lhs),mA,mB)(mtype(mB),pos)
-    case Reflect(e@RepAsInstanceOf(lhs, mA, mB), u, es) => reflectMirrored(Reflect(RepAsInstanceOf(f(lhs),mA,mB)(mtype(mB)), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case RepAsInstanceOf(lhs, mA, mB) => rep_asinstanceof(f(lhs),mA,mB)(using mtype(mB),pos)
+    case Reflect(e@RepAsInstanceOf(lhs, mA, mB), u, es) => reflectMirrored(Reflect(RepAsInstanceOf(f(lhs),mA,mB)(using mtype(mB)), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 }

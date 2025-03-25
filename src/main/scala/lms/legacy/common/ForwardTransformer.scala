@@ -79,7 +79,7 @@ trait ForwardTransformer extends internal.AbstractSubstTransformer with internal
 
   def self_mirror[A](sym: Sym[A], rhs : Def[A]): Exp[A] = {
     try {
-      mirror(rhs, self.asInstanceOf[Transformer])(mtype(sym.tp),mpos(sym.pos)) // cast needed why?
+      mirror(rhs, self.asInstanceOf[Transformer])(using mtype(sym.tp),mpos(sym.pos)) // cast needed why?
     } catch { //hack -- should not catch errors
       case e if e.toString contains "don't know how to mirror" => 
         printerr("error: " + e.getMessage)
@@ -104,7 +104,7 @@ trait RecursiveTransformer extends ForwardTransformer { self =>
 
   override def traverseStmsInBlock[A](stms: List[Stm]): Unit = {
     for (sym <- recursive) {
-      subst += (sym -> fresh(mtype(sym.tp)))
+      subst += (sym -> fresh(using mtype(sym.tp)))
     }
     super.traverseStmsInBlock(stms)
   }
@@ -114,7 +114,7 @@ trait RecursiveTransformer extends ForwardTransformer { self =>
       case Some(rhsThunk) =>
         val s2 = subst.get(s) match {
           case Some(s2@Sym(_)) => assert(recursive.contains(s)); s2
-          case _ => assert(!recursive.contains(s)); fresh(mtype(s.tp))
+          case _ => assert(!recursive.contains(s)); fresh(using mtype(s.tp))
         }
         createDefinition(s2, rhsThunk())
         s2
