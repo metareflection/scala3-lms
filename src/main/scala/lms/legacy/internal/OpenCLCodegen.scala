@@ -3,7 +3,7 @@ package internal
 
 import java.io.{FileWriter, StringWriter, PrintWriter, File}
 import java.util.ArrayList
-import collection.mutable.{ListBuffer, ArrayBuffer, LinkedList, HashMap}
+import collection.mutable.{ListBuffer, ArrayBuffer, HashMap}
 import collection.immutable.List._
 
 trait OpenCLCodegen extends GPUCodegen with CppHostTransfer with OpenCLDeviceTransfer {

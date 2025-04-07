@@ -25,7 +25,7 @@ trait Expressions extends Utils {
   }
 
   case class ManifestTyp[T](mf: Manifest[T]) extends Typ[T] {
-    def typeArguments: List[Typ[_]] = mf.typeArguments.map(ManifestTyp(_))
+    def typeArguments: List[Typ[?]] = mf.typeArguments.map(ManifestTyp(_))
     def arrayTyp: Typ[Array[T]] = ManifestTyp(mf.arrayManifest)
     def runtimeClass: java.lang.Class[_] = mf.runtimeClass
     def <:<(that: Typ[_]): Boolean = that match { 
@@ -99,12 +99,13 @@ trait Expressions extends Utils {
 
   def quotePos(e: Exp[Any]): String = e.pos match {
     case Nil => "<unknown>"
-    case cs => 
+    case cs => {
       def all(cs: SourceContext): List[SourceContext] = cs.parent match {
         case None => List(cs)
         case Some(p) => cs::all(p)
       }
-    cs.map(c => all(c).reverse.map(c => c.fileName.split("/").last + ":" + c.line).mkString("//")).mkString(";")
+      cs.map(c => all(c).reverse.map(c => c.fileName.split("/").last + ":" + c.line).mkString("//")).mkString(";")
+    }
   }
 
 
