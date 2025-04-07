@@ -3,7 +3,6 @@ package internal
 
 import util.GraphUtil
 import java.io.{File, PrintWriter}
-import scala.reflect.RefinedManifest
 
 trait GenericCodegen extends BlockTraversal {
   val IR: Expressions

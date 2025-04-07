@@ -17,12 +17,12 @@ trait CodeMotion extends Scheduling {
     // bound is 'must inside'
 
     // find transitive dependencies on bound syms, including their defs (in case of effects)
-    val bound = e1.flatMap(z => boundSyms(z.rhs))
+    val bound = e1.flatMap(z => boundSyms(infix_rhs(z)))
     val g1 = getFatDependentStuff(currentScope)(bound)
 
     // e1 = reachable
     val h1 = e1 filterNot (g1 contains _) // 'may outside'
-    val f1 = g1.flatMap { t => syms(t.rhs) } flatMap { s => h1 filter (_.lhs contains s) } // fringe: 1 step from g1
+    val f1 = g1.flatMap { t => syms(infix_rhs(t)) } flatMap { s => h1 filter (infix_lhs(_) contains s) } // fringe: 1 step from g1
 
     val e2 = getScheduleM(e1)(result, false, true)       // (shallow|hot)*  no cold ref on path
 
@@ -30,7 +30,7 @@ trait CodeMotion extends Scheduling {
 
     val f2 = f1 filterNot (e3 contains _)                   // fringe restricted to: any* hot any*
 
-    val h2 = getScheduleM(e1)(f2.flatMap(_.lhs), false, true)    // anything that depends non-cold on it...
+    val h2 = getScheduleM(e1)(f2.flatMap(infix_lhs(_)), false, true)    // anything that depends non-cold on it...
 
     // things that should live on this level:
     // - not within conditional: no cold ref on path (shallow|hot)*
@@ -51,7 +51,7 @@ trait CodeMotion extends Scheduling {
     val reachFromTopLoops = getSchedule(e1)(loopsNotInIfs,false)
 
     val f3 = f1 filter (reachFromTopLoops contains _)    // fringe restricted to: (shallow|hot)* hot any*
-    val h3 = getScheduleM(e1)(f3.flatMap(_.lhs), false, true)    // anything that depends non-cold on it...
+    val h3 = getScheduleM(e1)(f3.flatMap(infix_lhs(_)), false, true)    // anything that depends non-cold on it...
     
     val shouldOutside = e1 filter (z => (e2 contains z) || (h3 contains z))
     
@@ -92,7 +92,7 @@ trait CodeMotion extends Scheduling {
 
     object LocalDef {
       def unapply[A](x: Exp[A]): Option[Stm] = { // fusion may have rewritten Reify contents so we look at local scope
-        currentScope.find(_.lhs contains x)
+        currentScope.find(infix_lhs(_) contains x)
       }
     }    
 
@@ -100,9 +100,9 @@ trait CodeMotion extends Scheduling {
     result foreach {
       case LocalDef(TP(_, Reify(x, u, effects))) =>        
         val observable = if (addControlDeps) effects.filterNot(controlDep) else effects
-        val acteffects = levelScope.flatMap(_.lhs) filter (observable contains _)
+        val acteffects = levelScope.flatMap(infix_lhs(_)) filter (observable contains _)
         if (observable.toSet != acteffects.toSet) {
-          val actual = levelScope.filter(_.lhs exists (observable contains _))
+          val actual = levelScope.filter(infix_lhs(_) exists (observable contains _))
           val expected = observable.map(d=>/*fatten*/(findDefinition(d.asInstanceOf[Sym[Any]]).get)) 
           val missing = expected filterNot (actual contains _)
           val printfn = if (missing.isEmpty) printlog _ else printerr _
@@ -122,7 +122,7 @@ trait CodeMotion extends Scheduling {
             val inDep = g1 contains d
             printfn("    "+d+" <-- inDeep: "+inDeep+", inShallow: "+inShallow+", inDep: "+inDep)
             if (inDep) e1 foreach { z =>
-              val b = boundSyms(z.rhs)
+              val b = boundSyms(infix_rhs(z))
               if (b.isEmpty) "" else {
                 val g2 = getFatDependentStuff(currentScope)(b)
                 if (g2 contains d) {

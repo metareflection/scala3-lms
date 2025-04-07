@@ -32,7 +32,7 @@ trait GraphVizExport extends GraphTraversal {
     if (landscape)
       stream.println("rankdir=LR")
 
-    for (TP(sym, rhs) <- deflist) {
+    for (case TP(sym, rhs) <- deflist) {
 
       val deps = syms(rhs)
 

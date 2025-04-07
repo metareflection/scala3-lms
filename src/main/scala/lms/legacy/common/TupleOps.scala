@@ -45,29 +45,29 @@ trait TupleOps extends Base {
 
 trait TupleOpsExp extends TupleOps with StructExpOpt {
   implicit def tuple2_typ[A:Typ,B:Typ]: Typ[(A,B)] = {
-    implicit val ManifestTyp(mA) = typ[A]
-    implicit val ManifestTyp(mB) = typ[B]
+    implicit val ManifestTyp(mA: Manifest[A]) = typ[A]
+    implicit val ManifestTyp(mB: Manifest[B]) = typ[B]
     manifestTyp
   }
   implicit def tuple3_typ[A:Typ,B:Typ,C:Typ]: Typ[(A,B,C)] = {
-    implicit val ManifestTyp(mA) = typ[A]
-    implicit val ManifestTyp(mB) = typ[B]
-    implicit val ManifestTyp(mC) = typ[C]
+    implicit val ManifestTyp(mA: Manifest[A]) = typ[A]
+    implicit val ManifestTyp(mB: Manifest[B]) = typ[B]
+    implicit val ManifestTyp(mC: Manifest[C]) = typ[C]
     manifestTyp
   }
   implicit def tuple4_typ[A:Typ,B:Typ,C:Typ,D:Typ]: Typ[(A,B,C,D)] = {
-    implicit val ManifestTyp(mA) = typ[A]
-    implicit val ManifestTyp(mB) = typ[B]
-    implicit val ManifestTyp(mC) = typ[C]
-    implicit val ManifestTyp(mD) = typ[D]
+    implicit val ManifestTyp(mA: Manifest[A]) = typ[A]
+    implicit val ManifestTyp(mB: Manifest[B]) = typ[B]
+    implicit val ManifestTyp(mC: Manifest[C]) = typ[C]
+    implicit val ManifestTyp(mD: Manifest[D]) = typ[D]
     manifestTyp
   }
   implicit def tuple5_typ[A:Typ,B:Typ,C:Typ,D:Typ,E:Typ]: Typ[(A,B,C,D,E)] = {
-    implicit val ManifestTyp(mA) = typ[A]
-    implicit val ManifestTyp(mB) = typ[B]
-    implicit val ManifestTyp(mC) = typ[C]
-    implicit val ManifestTyp(mD) = typ[D]
-    implicit val ManifestTyp(mE) = typ[E]
+    implicit val ManifestTyp(mA: Manifest[A]) = typ[A]
+    implicit val ManifestTyp(mB: Manifest[B]) = typ[B]
+    implicit val ManifestTyp(mC: Manifest[C]) = typ[C]
+    implicit val ManifestTyp(mD: Manifest[D]) = typ[D]
+    implicit val ManifestTyp(mE: Manifest[E]) = typ[E]
     manifestTyp
   }
 

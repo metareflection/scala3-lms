@@ -89,13 +89,13 @@ trait NestedGraphTraversal extends GraphTraversal with CodeMotion {
 
     var recursive: List[Sym[Any]] = Nil
 
-    var xx = GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(allSyms(result), scopeIndex), t => scheduleDepsWithIndex(allSyms(t.rhs), scopeIndex))  
+    var xx = GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(allSyms(result), scopeIndex), t => scheduleDepsWithIndex(allSyms(infix_rhs(t)), scopeIndex))  
     xx.foreach { xs => 
       if (xs.length > 1 && (xs intersect level).nonEmpty) {
         printdbg("warning: recursive schedule for result " + result + ": " + xs)
 
         // find things residing on top level
-        val fs = (xs intersect level) flatMap (_.lhs)
+        val fs = (xs intersect level) flatMap (infix_lhs(_))
 
         recursive = fs ::: recursive
 
@@ -106,22 +106,22 @@ trait NestedGraphTraversal extends GraphTraversal with CodeMotion {
         // CAVEAT: even for lambdas, this works *only* if the initialization happens before the first call
         // TODO: can we check that somehow? -- maybe insert a dep from the call
         (inner intersect xs) foreach {
-          case stm if allSyms(stm.rhs) exists (fs contains _) => 
-            fixed(stm.rhs) = allSyms(stm.rhs) filterNot (fs contains _)
-            printdbg("fixing deps of " + stm.rhs + " to " + fixed(stm.rhs))
+          case stm if allSyms(infix_rhs(stm)) exists (fs contains _) => 
+            fixed(infix_rhs(stm)) = allSyms(infix_rhs(stm)) filterNot (fs contains _)
+            printdbg("fixing deps of " + infix_rhs(stm) + " to " + fixed(infix_rhs(stm)))
           case _ =>
         }
         
         // also remove direct inner deps (without inner stms): x1 = Lambda { x2 => Block(x3) }
         (level intersect xs) foreach {
-          case stm if allSyms(blocks(stm.rhs)) exists (fs contains _) => 
-            fixed(stm.rhs) = allSyms(stm.rhs) filterNot (fs contains _)
-            printdbg("fixing deps of " + stm.rhs + " to " + fixed(stm.rhs))
+          case stm if allSyms(blocks(infix_rhs(stm))) exists (fs contains _) => 
+            fixed(infix_rhs(stm)) = allSyms(infix_rhs(stm)) filterNot (fs contains _)
+            printdbg("fixing deps of " + infix_rhs(stm) + " to " + fixed(infix_rhs(stm)))
           case _ =>
         }
       }
     }
-    xx = GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(allSyms(result) ++ allSyms(recursive), scopeIndex), t => scheduleDepsWithIndex(allSyms(t.rhs), scopeIndex))
+    xx = GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(allSyms(result) ++ allSyms(recursive), scopeIndex), t => scheduleDepsWithIndex(allSyms(infix_rhs(t)), scopeIndex))
     xx.foreach { xs => 
       if (xs.length > 1 && (xs intersect level).nonEmpty) {
         // see test5-schedfun. since we're only returning level scope (not inner)

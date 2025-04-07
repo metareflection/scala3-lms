@@ -17,7 +17,7 @@ trait WhileExp extends While with BooleanOps with EffectExp {
     val a = reifyEffects(body)
     val ce = summarizeEffects(c)
     val ae = summarizeEffects(a)
-    reflectEffect(While(c, a), ce andThen ((ae andThen ce).star))
+    reflectEffect(While(c, a), infix_andThen(ce,(infix_star(infix_andThen(ae, ce)))))
   }
 
   override def syms(e: Any): List[Sym[Any]] = e match {
@@ -74,7 +74,7 @@ trait WhileExpOptSpeculative extends WhileExp with PreviousIterationDummyExp {
     val ce = summarizeEffects(c)
     val ae = summarizeEffects(a)
 */
-    reflectEffect(While(cr, ar), cer andThen ((aer andThen cer).star))
+    reflectEffect(While(cr, ar), infix_andThen(cer, (infix_star((infix_andThen(aer, cer))))))
   }
 
 }

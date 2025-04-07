@@ -289,9 +289,9 @@ trait LoopFusionCore extends internal.FatScheduling with CodeMotion with Simplif
       //do{
         
         // utils
-        def WgetLoopShape(e: Stm): Exp[Int] = e.rhs match { case SimpleFatLoop(s,x,rhs) => s }
-        def WgetLoopVar(e: Stm): List[Sym[Int]] = e.rhs match { case SimpleFatLoop(s,x,rhs) => List(x) }
-        def WgetLoopRes(e: Stm): List[Def[Any]] = e.rhs match { case SimpleFatLoop(s,x,rhs) => rhs }
+        def WgetLoopShape(e: Stm): Exp[Int] = infix_rhs(e) match { case SimpleFatLoop(s,x,rhs) => s }
+        def WgetLoopVar(e: Stm): List[Sym[Int]] = infix_rhs(e) match { case SimpleFatLoop(s,x,rhs) => List(x) }
+        def WgetLoopRes(e: Stm): List[Def[Any]] = infix_rhs(e) match { case SimpleFatLoop(s,x,rhs) => rhs }
 
         val loopCollectSyms = Wloops flatMap (e => (infix_lhs(e) zip WgetLoopRes(e)) collect { case (s, SimpleCollectIf(_,_)) => s })
 
@@ -318,7 +318,7 @@ trait LoopFusionCore extends internal.FatScheduling with CodeMotion with Simplif
             case e@TP(_, SimpleIndex(a,i)) if (thisLoopVars contains i) && (loopCollectSyms contains a) => 
               Nil // direct deps on this loop's induction var don't count
             case sc =>
-              val pr = syms(sc.rhs).intersect(otherLoopSyms) flatMap { otherLoop => dx.lhs map ((otherLoop, _)) }
+              val pr = syms(infix_rhs(sc)).intersect(otherLoopSyms) flatMap { otherLoop => infix_lhs(dx) map ((otherLoop, _)) }
               if (pr.nonEmpty) printlog("fusion of "+pr+" prevented by " + sc + " which is required by body of " + infix_lhs(dx))// + " / " + thisLoopVars)
               pr
           }
@@ -339,9 +339,9 @@ trait LoopFusionCore extends internal.FatScheduling with CodeMotion with Simplif
         // other preconditions for fusion: loops must have same shape, or one must loop over the other's result
 
         def canFuseIndirect(a: Stm, b: Stm): Boolean = 
-          !WtableNeg.exists(p => (infix_lhs(a) contains p._1) && (b.lhs contains p._2) || (b.lhs contains p._1) && (infix_lhs(a) contains p._2))
+          !WtableNeg.exists(p => (infix_lhs(a) contains p._1) && (infix_lhs(b) contains p._2) || (infix_lhs(b) contains p._1) && (infix_lhs(a) contains p._2))
 
-        def canFuseDirect(a: Stm, b: Stm): Boolean = (a.rhs,b.rhs) match {
+        def canFuseDirect(a: Stm, b: Stm): Boolean = (infix_rhs(a),infix_rhs(b)) match {
           case (SimpleFatLoop(s1,_,_), SimpleFatLoop(s2,_,_)) if s1 == s2 => true  // same size (horizontal or pipeline)
           case (SimpleFatLoop(Def(SimpleDomain(a1)),_,_), SimpleFatLoop(_,_,_)) if infix_lhs(b) contains a1 => true // pipeline
           case (SimpleFatLoop(_,_,_), SimpleFatLoop(Def(SimpleDomain(b1)),_,_)) if infix_lhs(a) contains b1 => true
@@ -355,8 +355,8 @@ trait LoopFusionCore extends internal.FatScheduling with CodeMotion with Simplif
         def isShapeDep(s: Exp[Int], a: Stm) = s match { case Def(SimpleDomain(a1)) => infix_lhs(a) contains a1 case _ => false }
         def getShapeCond(s: Exp[Int], a: Stm) = s match { case Def(SimpleDomain(a1)) => WgetLoopRes(a)(infix_lhs(a) indexOf a1) match { case SimpleCollectIf(a,c) => c } }
 
-        def extendLoopWithCondition(e: Stm, shape: Exp[Int], targetVar: Sym[Int], c: List[Exp[Boolean]]): List[Exp[Any]] = e.rhs match { 
-          case SimpleFatLoop(s,x,rhs) => (infix_lhs(e) zip rhs).map { case (l,r) => findOrCreateDefinitionExp(SimpleLoop(shape,targetVar,applyAddCondition(r,c)), l.pos)(mtype(l.tp)) }
+        def extendLoopWithCondition(e: Stm, shape: Exp[Int], targetVar: Sym[Int], c: List[Exp[Boolean]]): List[Exp[Any]] = infix_rhs(e) match { 
+          case SimpleFatLoop(s,x,rhs) => (infix_lhs(e) zip rhs).map { case (l,r) => findOrCreateDefinitionExp(SimpleLoop(shape,targetVar,applyAddCondition(r,c)), l.pos)(using mtype(l.tp)) }
         }
 
         // partitioning: build maximal sets of loops to be fused

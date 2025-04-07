@@ -101,14 +101,14 @@ trait SplitEffectsExpFat extends IfThenElseFatExp with WhileExp with PreviousIte
       val deps = calculateDependencies(es, Write(s), false)
       //println("deps: " + deps.map(e=>findDefinition(e.asInstanceOf[Sym[Any]])))
       
-      Block(Reify(Const(), projectS(u,s), deps))
+      Block(Reify(Const(()), projectS(u,s), deps))
     case _ => Block(Const(()))
   }
 
   def projectSimpleS(u: Summary) = 
     Pure().copy(maySimple = u.maySimple, mstSimple = u.mstSimple)
   def projectSimpleB(b: Block[Any]): Block[Unit] = b match {
-    case Block(Def(Reify(x, u, es))) => Block(Reify(Const(), projectSimpleS(u), calculateDependencies(es, Simple(), false)))
+    case Block(Def(Reify(x, u, es))) => Block(Reify(Const(()), projectSimpleS(u), calculateDependencies(es, Simple(), false)))
     case _ => Block(Const(()))
   }
 

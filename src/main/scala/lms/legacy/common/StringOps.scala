@@ -8,7 +8,7 @@ import scala.lms.internal.{GenerationFailedException}
 trait LiftString {
   this: StringOps =>
 
-  implicit def strToRepStr(s: String) = unit(s)
+  implicit def strToRepStr(s: String): Rep[String] = unit(s)
 }
 
 trait StringOps extends Variables with OverloadHack with PrimitiveOps {

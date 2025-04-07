@@ -64,15 +64,15 @@ trait NestedBlockTraversal extends BlockTraversal with NestedGraphTraversal {
   // ---- bound and free vars
 
   def boundInScope(x: List[Exp[Any]]): List[Sym[Any]] = {
-    (x.flatMap(syms):::innerScope.flatMap(t => t.lhs:::boundSyms(t.rhs))).distinct
+    (x.flatMap(syms):::innerScope.flatMap(t => infix_lhs(t):::boundSyms(infix_rhs(t)))).distinct
   }
   
   def usedInScope(y: List[Exp[Any]]): List[Sym[Any]] = {
-    (y.flatMap(syms):::innerScope.flatMap(t => syms(t.rhs))).distinct
+    (y.flatMap(syms):::innerScope.flatMap(t => syms(infix_rhs(t)))).distinct
   }
   
   def readInScope(y: List[Exp[Any]]): List[Sym[Any]] = {
-    (y.flatMap(syms):::innerScope.flatMap(t => readSyms(t.rhs))).distinct
+    (y.flatMap(syms):::innerScope.flatMap(t => readSyms(infix_rhs(t)))).distinct
   }
   
   // bound/used/free variables in current scope, with input vars x (bound!) and result y (used!)
@@ -118,7 +118,7 @@ trait NestedBlockTraversal extends BlockTraversal with NestedGraphTraversal {
   }
 
   def traverseStm(stm: Stm): Unit = { // override this to implement custom traversal
-    blocks(stm.rhs) foreach traverseBlock
+    blocks(infix_rhs(stm)) foreach traverseBlock
   }
 
   // ----- reset

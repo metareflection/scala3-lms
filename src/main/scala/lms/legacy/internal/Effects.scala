@@ -267,7 +267,7 @@ trait Effects extends Expressions with Blocks with Utils {
   
   def utilLoadStm[T](s: Sym[T]) = if (!isPrimitiveType(s.tp)) /*globalDefs.filter{e => e.lhs contains s}*/ findDefinition(s).toList else Nil
   def utilLoadStms(s: List[Sym[Any]]) = s.flatMap(utilLoadStm)
-  def utilLoadSym[T](s: Sym[T]) = utilLoadStm(s).map(_.rhs)
+  def utilLoadSym[T](s: Sym[T]) = utilLoadStm(s).map(infix_rhs(_))
   
   def shallowAliases(start: Any): List[Sym[Any]] = {
     val alias = noPrim(aliasSyms(start)) flatMap { a => a::shallowAliasCache.getOrElseUpdate(a, shallowAliases(utilLoadSym(a))) }
@@ -426,7 +426,7 @@ trait Effects extends Expressions with Blocks with Utils {
   def reflectEffect[A:Typ](d: Def[A], u: Summary)(implicit pos: SourceContext): Exp[A] = {
     // are we depending on a variable? then we need to be serialized -> effect
     val mutableInputs = readMutableData(d)
-    reflectEffectInternal(d, u andAlso Read(mutableInputs)) // will call super.toAtom if mutableInput.isEmpty
+    reflectEffectInternal(d, infix_andAlso(u, Read(mutableInputs))) // will call super.toAtom if mutableInput.isEmpty
   }
   
   def reflectEffectInternal[A:Typ](x: Def[A], u: Summary)(implicit pos: SourceContext): Exp[A] = {
@@ -546,11 +546,11 @@ trait Effects extends Expressions with Blocks with Utils {
     var ux = u
     var allocs: List[Exp[Any]] = Nil
     def clean(xs: List[Sym[Any]]) = xs.filterNot(allocs contains _)
-    for (s@Def(Reflect(_, u2, _)) <- es) {
+    for (case s@Def(Reflect(_, u2, _)) <- es) {
       if (mustMutable(u2)) allocs ::= s
-      u = u andThen (u2.copy(mayRead = clean(u2.mayRead), mstRead = clean(u2.mstRead),
-              mayWrite = clean(u2.mayWrite), mstWrite = clean(u2.mstWrite)))
-      ux = ux andThen u2
+      u = infix_andThen(u, (u2.copy(mayRead = clean(u2.mayRead), mstRead = clean(u2.mstRead),
+              mayWrite = clean(u2.mayWrite), mstWrite = clean(u2.mstWrite))))
+      ux = infix_andThen(ux,u2)
     }
     //if (ux != u) printdbg("** effect summary reduced from "+ux+" to" + u)
     u

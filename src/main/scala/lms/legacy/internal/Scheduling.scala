@@ -32,11 +32,11 @@ trait Scheduling {
   //TBD: not used?
   def getStronglySortedSchedule(scope: List[Stm])(result: Any): List[Stm] = {
     def deps(st: List[Sym[Any]]): List[Stm] = 
-      scope.filter(d => containsAny(st, d.lhs))
+      scope.filter(d => containsAny(st, infix_lhs(d)))
       // scope.filter(d => (st intersect d.lhs).nonEmpty)
     def allSyms(r: Any) = syms(r) ++ softSyms(r)
     
-    val xx = GraphUtil.stronglyConnectedComponents[Stm](deps(allSyms(result)), t => deps(allSyms(t.rhs)))
+    val xx = GraphUtil.stronglyConnectedComponents[Stm](deps(allSyms(result)), t => deps(allSyms(infix_rhs(t))))
     xx.foreach { x => 
       if (x.length > 1) {
         printerr("warning: recursive schedule for result " + result + ": " + x)
@@ -71,7 +71,7 @@ trait Scheduling {
     val cache = new IdentityHashMap[Sym[Any], (Stm,Int)]
     var idx = 0
     for (stm <- scope) {
-      for (s <- stm.lhs) cache.put(s, (stm,idx)) //remember the original order of the stms
+      for (s <- infix_lhs(stm)) cache.put(s, (stm,idx)) //remember the original order of the stms
       idx += 1
     }
     cache
@@ -80,7 +80,7 @@ trait Scheduling {
   def getSchedule(scope: List[Stm])(result: Any, sort: Boolean = true): List[Stm] = {
     val scopeIndex = buildScopeIndex(scope)
 
-    val xx = GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(syms(result), scopeIndex), t => scheduleDepsWithIndex(syms(t.rhs), scopeIndex))
+    val xx = GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(syms(result), scopeIndex), t => scheduleDepsWithIndex(syms(infix_rhs(t)), scopeIndex))
     if (sort) xx.foreach { x => 
       if (x.length > 1) {
         printerr("warning: recursive schedule for result " + result + ": " + x)
@@ -102,7 +102,7 @@ trait Scheduling {
 
     val scopeIndex = buildScopeIndex(scope)
 
-    GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(mysyms(result), scopeIndex), t => scheduleDepsWithIndex(mysyms(t.rhs), scopeIndex)).flatten.reverse
+    GraphUtil.stronglyConnectedComponents[Stm](scheduleDepsWithIndex(mysyms(result), scopeIndex), t => scheduleDepsWithIndex(mysyms(infix_rhs(t)), scopeIndex)).flatten.reverse
   }
     
   
@@ -151,7 +151,7 @@ trait Scheduling {
     }
     
     def putDefSet(map: IdentityHashMap[Sym[Any], Set[Stm]], s: Sym[Any], d: Stm): Unit = {
-      var res = map(s) //map.get(s)
+      var res = map.get(s) //map.get(s)
       if (res == null) {
         res = Set[Stm]()
         map.asScala.update(s,res) //map.put(s,res)
@@ -160,10 +160,10 @@ trait Scheduling {
     }
     
     for (d <- scope) {
-      d.lhs.foreach(s => putDef(lhsCache, s, d))
-      syms(d.rhs).foreach(s => putDef(symsCache, s, d))      
-      boundSyms(d.rhs).foreach(st => putDef(boundSymsCache, st, d))
-      tunnelSyms(d.rhs).foreach(st => putDef(boundSymsCache, st, d)) // treat tunnel like bound
+      infix_lhs(d).foreach(s => putDef(lhsCache, s, d))
+      syms(infix_rhs(d)).foreach(s => putDef(symsCache, s, d))      
+      boundSyms(infix_rhs(d)).foreach(st => putDef(boundSymsCache, st, d))
+      tunnelSyms(infix_rhs(d)).foreach(st => putDef(boundSymsCache, st, d)) // treat tunnel like bound
     }
     
     /*
@@ -187,11 +187,11 @@ trait Scheduling {
       // could also precalculate uses, but computing all combinations eagerly is also expensive
       def uses(s: Sym[Any]): List[Stm] = if (seen(s)) Nil else { 
         //seen += s
-        lhsCache.getOrElse(s,Nil) ::: symsCache.getOrElse(s,Nil) filterNot (boundSymsCache.getOrElse(st, Nil) contains _)
+        lhsCache.asScala.getOrElse(s,Nil) ::: symsCache.asScala.getOrElse(s,Nil) filterNot (boundSymsCache.asScala.getOrElse(st, Nil) contains _)
       }
       GraphUtil.stronglyConnectedComponents[Stm](
         uses(st),
-        t => t.lhs flatMap uses
+        t => infix_lhs(t) flatMap uses
       ).flatten
     }
     

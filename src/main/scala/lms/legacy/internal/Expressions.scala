@@ -154,14 +154,14 @@ trait Expressions extends Utils {
   }
 
   def reflectSubGraph(ds: List[Stm]): Unit = {
-    val lhs = ds.flatMap(_.lhs)
+    val lhs = ds.flatMap(infix_lhs(_))
     assert(lhs.length == lhs.distinct.length, "multiple defs: " + ds)
     // equivalent to: globalDefs filter (_.lhs exists (lhs contains _))
     val existing = lhs flatMap (globalDefsCache get _)
     assert(existing.isEmpty, "already defined: " + existing + " for " + ds)
     localDefs = localDefs ::: ds
     globalDefs = globalDefs ::: ds
-    for (stm <- ds; s <- stm.lhs) {      
+    for (stm <- ds; s <- infix_lhs(stm)) {      
       globalDefsCache += (s->stm)
     }
   }

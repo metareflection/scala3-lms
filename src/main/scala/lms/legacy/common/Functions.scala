@@ -64,8 +64,8 @@ trait TupledFunctions extends Functions with TupleOps {
 
 trait FunctionsExp extends Functions with EffectExp {
   implicit def funTyp[A:Typ,B:Typ]: Typ[A => B] = {
-    implicit val ManifestTyp(mA) = typ[A]
-    implicit val ManifestTyp(mB) = typ[B]
+    implicit val ManifestTyp(mA: Manifest[A]) = typ[A]
+    implicit val ManifestTyp(mB: Manifest[B]) = typ[B]
     manifestTyp
   }
 
