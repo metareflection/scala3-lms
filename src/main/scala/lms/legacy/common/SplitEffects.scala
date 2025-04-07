@@ -29,7 +29,7 @@ trait SplitEffectsExpFat extends IfThenElseFatExp with WhileExp with PreviousIte
       if (u.maySimple)
         super.reflectEffectInternal(IfThenElse(cond,projectSimpleB(thenp),projectSimpleB(elsep)), projectSimpleS(u))
 
-      super.reflectEffectInternal(IfThenElse(cond,projectPureB(thenp),projectPureB(elsep)), projectPureS(u))
+      super.reflectEffectInternal(IfThenElse[A](cond,projectPureB(thenp),projectPureB(elsep)), projectPureS(u))
 
     case While(cond, body) =>
       val affected = (u.mayRead ++ u.mayWrite).distinct

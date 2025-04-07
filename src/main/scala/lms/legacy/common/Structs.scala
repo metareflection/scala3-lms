@@ -324,7 +324,7 @@ trait StructFatExpOptCommon extends StructFatExp with StructExpOptCommon with If
   }
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case p@Phi(c,a,u,b,v) => phiB(f(c),f(a),f(u),f(b),f(v))(f(p.parent))
+    case p@Phi(c,a,u,b,v) => phiB(f(c),f(a),f(u),f(b),f(v))[A](f(p.parent))
     case _ => super.mirror(e,f)
   }
 

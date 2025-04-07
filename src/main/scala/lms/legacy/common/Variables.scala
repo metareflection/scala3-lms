@@ -192,9 +192,9 @@ trait VariablesExp extends Variables with PrimitiveOps with ImplicitOpsExp with 
 
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case ReadVar(Variable(a)) => readVar(Variable(f(a)))
+    case ReadVar(Variable(a)) => readVar[A](Variable(f(a)))
     case Reflect(e@NewVar(a), u, es) => reflectMirrored(Reflect(NewVar(f(a))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
-    case Reflect(ReadVar(Variable(a)), u, es) => reflectMirrored(Reflect(ReadVar(Variable(f(a))), mapOver(f,u), f(es)))(mtyp1[A], pos)
+    case Reflect(ReadVar(Variable(a)), u, es) => reflectMirrored(Reflect(ReadVar[A](Variable(f(a))), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case Reflect(e@Assign(Variable(a),b), u, es) => reflectMirrored(Reflect(Assign(Variable(f(a)), f(b))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case Reflect(e@VarPlusEquals(Variable(a),b), u, es) => reflectMirrored(Reflect(VarPlusEquals(Variable(f(a)), f(b))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)
     case Reflect(e@VarMinusEquals(Variable(a),b), u, es) => reflectMirrored(Reflect(VarMinusEquals(Variable(f(a)), f(b))(using e.m), mapOver(f,u), f(es)))(using mtyp1[A], pos)

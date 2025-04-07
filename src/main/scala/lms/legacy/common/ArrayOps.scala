@@ -160,11 +160,11 @@ trait ArrayOpsExpOpt extends ArrayOpsExp {
     case Def(ArrayNew(n: Exp[Int])) => n
     case Def(ArrayFromSeq(xs)) => Const(xs.size)
     case Def(ArraySort(x)) => array_length(x)
-    case Def(ArrayMap(x: Exp[Array[T]], _, _)) => array_length(x)
+    case Def(ArrayMap(x: Exp[Array[T]], _, _)) => array_length[T](x)
     case Def(Reflect(ArrayNew(n: Exp[Int]), _, _)) => n
     case Def(Reflect(ArrayFromSeq(xs), _, _)) => Const(xs.size)
     case Def(Reflect(ArraySort(x), _, _)) => array_length(x)
-    case Def(Reflect(ArrayMap(x: Exp[Array[T]], _, _), _, _)) => array_length(x)
+    case Def(Reflect(ArrayMap(x: Exp[Array[T]], _, _), _, _)) => array_length[T](x)
     case _ => super.array_length(a)
   }
 
