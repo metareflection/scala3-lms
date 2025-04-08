@@ -2,7 +2,7 @@ package scala.lms
 
 import scala.quoted.*
 
-case class SourceContext(file: String, line: Int, column: Int)
+case class SourceContext(fileName: String, line: Int, column: Int)
 
 object SourceContext {
   inline implicit def generate: SourceContext = ${ generateImpl }
