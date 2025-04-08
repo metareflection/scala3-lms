@@ -367,7 +367,7 @@ trait LoopFusionCore extends internal.FatScheduling with CodeMotion with Simplif
         var partitionsIn = Wloops
         var partitionsOut = Nil:List[Stm]
 
-        for (b@ TTP(_,_,_) <- partitionsIn) {
+        for (case b@ TTP(_,_,_) <- partitionsIn) {
           // try to add to an item in partitionsOut, if not possible add as-is
           partitionsOut.find(a => canFuse(a,b)) match {
             case Some(a: TTP) => 

@@ -65,7 +65,7 @@ trait DefUseAnalysis extends NestedBlockTraversal {
       
       var pairs = List[(Exp[Any],Exp[Any])]()
     
-      for (TP(sym, rhs) <- innerScope) {
+      for (case TP(sym, rhs) <- innerScope) {
         for (use <- syms(rhs)) {
           pairs = (use, sym) :: pairs
         }
