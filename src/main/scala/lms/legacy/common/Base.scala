@@ -7,7 +7,7 @@ import internal._
  * This trait automatically lifts any concrete instance to a representation.
  */
 trait LiftAll extends Base {
-  protected implicit def __unit[T:Typ](x: T) = unit(x)
+  protected implicit def __unit[T:Typ](x: T): Rep[T] = unit(x)
 }
 
 /**

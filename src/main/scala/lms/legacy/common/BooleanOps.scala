@@ -7,7 +7,7 @@ trait LiftBoolean {
   this: Base =>
 
   implicit def boolTyp: Typ[Boolean]
-  implicit def boolToBoolRep(b: Boolean) = unit(b)
+  implicit def boolToBoolRep(b: Boolean): Rep[Boolean] = unit(b)
 }
 
 trait BooleanOps extends Variables {

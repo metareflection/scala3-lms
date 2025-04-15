@@ -3,12 +3,9 @@ package internal
 
 import java.io._
 
-import scala.tools.nsc._
-import scala.tools.nsc.util._
-import scala.tools.nsc.reporters._
-import scala.tools.nsc.io._
-
-import scala.tools.nsc.interpreter.AbstractFileClassLoader
+import dotty.tools.dotc.util._
+import dotty.tools.dotc.config._
+import dotty.tools.dotc.reporting._
 
 
 trait ScalaCompile extends Expressions {

@@ -8,8 +8,8 @@ trait CastingOps extends Variables with OverloadHack {
   this: ImplicitOps =>
 
   //implicit def anyToCastingOps[A:Typ](lhs: A) = new CastingOpsCls(lhs)
-  implicit def repAnyToCastingOps[A:Typ](lhs: Rep[A]) = new CastingOpsCls(lhs)
-  implicit def varAnyToCastingOps[A:Typ](lhs: Var[A]) = new CastingOpsCls(readVar(lhs))
+  implicit def repAnyToCastingOps[A:Typ](lhs: Rep[A]): CastingOpsCls[A] = new CastingOpsCls(lhs)
+  implicit def varAnyToCastingOps[A:Typ](lhs: Var[A]): CastingOpsCls[A] = new CastingOpsCls(readVar(lhs))
     
   class CastingOpsCls[A:Typ](lhs: Rep[A]){
     def IsInstanceOf[B:Typ](implicit pos: SourceContext): Rep[Boolean] = rep_isinstanceof(lhs, typ[A], typ[B])
