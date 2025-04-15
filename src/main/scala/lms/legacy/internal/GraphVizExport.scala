@@ -10,7 +10,7 @@ trait GraphVizExport extends GraphTraversal {
   def quote(x: Any) = "\""+x+"\""
   
   def emitNode(sym: Sym[Any], rhs: Def[Any])(implicit stream: PrintWriter) = {
-    stream.println("label=" + quote(sym + " \\n " + rhs))
+    stream.println("label=" + quote("" + sym + " \\n " + rhs))
     stream.println("shape=box")
   }
 

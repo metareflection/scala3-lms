@@ -19,7 +19,7 @@ trait StructOps extends Base {
   class RecordOps(record: Rep[Record]) {
     def selectDynamic[T : Typ](field: String): Rep[T] = record_select[T](record, field)
   }
-  implicit def recordToRecordOps(record: Rep[Record]) = new RecordOps(record)
+  implicit def recordToRecordOps(record: Rep[Record]): RecordOps = new RecordOps(record)
 
   def record_new[T : Typ](fields: Seq[(String, Boolean, Rep[T] => Rep[_])]): Rep[T]
   def record_select[T : Typ](record: Rep[Record], field: String): Rep[T]
@@ -324,7 +324,7 @@ trait StructFatExpOptCommon extends StructFatExp with StructExpOptCommon with If
   }
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case p@Phi(c,a,u,b,v) => phiB(f(c),f(a),f(u),f(b),f(v))[A](f(p.parent))
+    case p@Phi(c,a,u,b,v) => phiB[A](f(c),f(a),f(u),f(b),f(v))(f(p.parent))
     case _ => super.mirror(e,f)
   }
 

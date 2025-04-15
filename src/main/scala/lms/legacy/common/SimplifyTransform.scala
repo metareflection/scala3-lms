@@ -63,7 +63,7 @@ trait SimplifyTransform extends internal.FatScheduling {
         s
       }
     } catch { //hack
-      case e if e.toString contains "don't know how to mirror" => 
+      case e if e.toString.contains("don't know how to mirror") => 
         printerr("error: " + e.getMessage)
         s
       case e: Throwable => 
@@ -97,7 +97,7 @@ trait SimplifyTransform extends internal.FatScheduling {
   // TODO: generalize, abstract out SimpleFatXX types
   def transformAll(scope: List[Stm], t: SubstTransformer): List[Stm] = {
     val scopeIndex = new java.util.IdentityHashMap[Sym[Any],Stm]
-    for (stm <- scope; s <- stm) scopeIndex.put(s,stm)    
+    for (stm <- scope) stm.foreach(s => scopeIndex.put(s,stm))
 
     scope flatMap {
       case TP(sym, rhs) =>
@@ -140,7 +140,7 @@ trait SimplifyTransform extends internal.FatScheduling {
         // alternate strategy: transform thin def, then fatten again (a little detour)
         printdbg("need to transform rhs of fat loop: " + lhs + ", " + rhs)
         val lhs2 = (lhs zip mhs).map { case (s,r) => transformOne(s, r, t) }.distinct.asInstanceOf[List[Sym[Any]]]
-        val mhs2 = lhs2.map(s => findDefinition(s).get.defines(s).get)
+        val mhs2 = lhs2.map(s => infix_defines(findDefinition(s).get, s).get)
         if (lhs != lhs2) {
           val missing = (lhs2.map(s => findDefinition(s).get) diff scope/*innerScope*/)
           printdbg("lhs changed! will add to innerScope: "+missing.mkString(","))
@@ -151,9 +151,9 @@ trait SimplifyTransform extends internal.FatScheduling {
           case l: AbstractLoop[_] => l
           case Reflect(l: AbstractLoop[_], _, _) => l
         }
-        val shape2 = if (lhs != lhs2) mhs2.map (_.toLoop.size) reduceLeft { (s1,s2) => assert(s1==s2,"shapes don't agree: "+s1+","+s2); s1 }
+        val shape2 = if (lhs != lhs2) mhs2.map (infix_toLoop(_).size) reduceLeft { (s1,s2) => assert(s1==s2,"shapes don't agree: "+s1+","+s2); s1 }
                      else t(s)
-        val rhs2 = (if (lhs != lhs2) (lhs2 zip (mhs2 map (_.toLoop.body)))
+        val rhs2 = (if (lhs != lhs2) (lhs2 zip (mhs2 map (infix_toLoop(_).body)))
                     else (lhs zip rhs)) map { case (s,r) => transformLoopBody(s,r,t) }
         
   /*      //update innerScope -- change definition of lhs2 in place (necessary?)
@@ -223,7 +223,7 @@ trait SimplifyTransform extends internal.FatScheduling {
   
     if (currentScope != previousScope) { // check convergence
       printerr("error: transformation of scope contents has not converged")
-      printdbg(previousScope + "-->" + currentScope)
+      printdbg("" + previousScope + "-->" + currentScope)
     }
   
     /*println("<x---"+result0+"/"+result)
@@ -237,7 +237,7 @@ trait SimplifyTransform extends internal.FatScheduling {
   def simplify(scope: List[Stm])(results: List[Exp[Any]]): (List[Stm], List[Exp[Any]]) = {
     val t = new SubstTransformer    
     val scope2 = transformAll(scope, t)
-    val results2 = results map (t apply _)
+    val results2 = results map (t.apply(_))
     (scope2, results2)
   }
 }

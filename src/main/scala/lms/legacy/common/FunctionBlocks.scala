@@ -52,7 +52,8 @@ trait FunctionBlocksExp extends BaseExp with Blocks with Effects with OverloadHa
      }
    }
    
-  implicit def transformerToBlockTransformer(t: ForwardTransformer{val IR: FunctionBlocksExp.this.type}) = new {
+  // CR cam: I don't trust this type annotation
+  implicit def transformerToBlockTransformer(t: ForwardTransformer{val IR: FunctionBlocksExp.this.type}): AnyRef = new {
     def apply[R](x: Block0[R]): (() => Exp[R]) =  { () => t.reflectBlock(x.blockRes) }
     def apply[T1,R](x: Block1[T1,R]): Exp[T1] => Exp[R] = { a => transformBlockWithBound(t, x.blockRes, List(x.blockArg1 -> a)) }
     def apply[T1,T2,R](x: Block2[T1,T2,R]): (Exp[T1],Exp[T2]) => Exp[R] = { (a,b) => transformBlockWithBound(t, x.blockRes, List(x.blockArg1 -> a, x.blockArg2 -> b)) }

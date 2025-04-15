@@ -25,7 +25,7 @@ trait UncheckedOps extends Base {
   
   // args: =>Code* is not allowed so we make thunks explicit
   case class Thunk[+A](eval: () => A)
-  implicit def toThunk[A](x: =>A) = new Thunk(() => x)
+  implicit def toThunk[A](x: =>A):Thunk[A] = new Thunk(() => x)
 
 }
 
