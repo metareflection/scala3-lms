@@ -4,6 +4,7 @@ package internal
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable.ListBuffer
 import java.lang.{StackTraceElement,Thread}
+import scala.Predef.{Manifest => _, _}
 
 
 /**
@@ -13,7 +14,6 @@ import java.lang.{StackTraceElement,Thread}
  * @since 0.1
  */
 trait Expressions extends Utils {
-
   abstract class Typ[T] {
     def typeArguments: List[Typ[_]]
     def arrayTyp: Typ[Array[T]]

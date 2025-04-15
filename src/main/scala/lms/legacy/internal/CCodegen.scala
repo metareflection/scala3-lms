@@ -1,5 +1,5 @@
 package scala.lms
-  package internal
+package internal
 
 import java.io.{FileWriter, PrintWriter, File}
 import collection.immutable.List._

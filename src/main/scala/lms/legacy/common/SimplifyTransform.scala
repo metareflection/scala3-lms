@@ -97,7 +97,7 @@ trait SimplifyTransform extends internal.FatScheduling {
   // TODO: generalize, abstract out SimpleFatXX types
   def transformAll(scope: List[Stm], t: SubstTransformer): List[Stm] = {
     val scopeIndex = new java.util.IdentityHashMap[Sym[Any],Stm]
-    for (stm <- scope) stm.foreach(s => scopeIndex.put(s,stm))
+    for (stm <- scope; s <- stm) scopeIndex.put(s,stm)
 
     scope flatMap {
       case TP(sym, rhs) =>

@@ -2,7 +2,7 @@ package scala.lms
 
 import scala.quoted.*
 
-case class SourceContext(fileName: String, line: Int, column: Int)
+case class SourceContext(fileName: String, line: Int, column: Int, parent: Option[SourceContext])
 
 object SourceContext {
   inline implicit def generate: SourceContext = ${ generateImpl }
@@ -15,6 +15,7 @@ object SourceContext {
     val line = pos.startLine + 1
     val column = pos.startColumn + 1
 
-    '{ SourceContext(${Expr(file)}, ${Expr(line)}, ${Expr(column)}) }
+    // TODO
+    '{ SourceContext(${Expr(file)}, ${Expr(line)}, ${Expr(column)}, None) }
   }
 }
