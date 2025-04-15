@@ -15,13 +15,13 @@ trait TupleOps extends Base {
   implicit def make_tuple4[A:Typ,B:Typ,C:Typ,D:Typ](t: (Rep[A], Rep[B], Rep[C], Rep[D]))(implicit pos: SourceContext) : Rep[(A,B,C,D)]
   implicit def make_tuple5[A:Typ,B:Typ,C:Typ,D:Typ,E:Typ](t: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E]))(implicit pos: SourceContext) : Rep[(A,B,C,D,E)]
 
-  implicit def t2[A:Typ,B:Typ](t: Rep[(A,B)])(implicit pos: SourceContext) =
+  implicit def t2[A:Typ,B:Typ](t: Rep[(A,B)])(implicit pos: SourceContext): (Rep[A], Rep[B]) =
     ((tuple2_get1(t),tuple2_get2(t)))
-  implicit def t3[A:Typ,B:Typ,C:Typ](t: Rep[(A,B,C)])(implicit pos: SourceContext) =
+  implicit def t3[A:Typ,B:Typ,C:Typ](t: Rep[(A,B,C)])(implicit pos: SourceContext): (Rep[A], Rep[B], Rep[C]) =
     ((tuple3_get1(t),tuple3_get2(t),tuple3_get3(t)))
-  implicit def t4[A:Typ,B:Typ,C:Typ,D:Typ](t: Rep[(A,B,C,D)])(implicit pos: SourceContext) =
+  implicit def t4[A:Typ,B:Typ,C:Typ,D:Typ](t: Rep[(A,B,C,D)])(implicit pos: SourceContext): (Rep[A], Rep[B], Rep[C], Rep[D]) =
     ((tuple4_get1(t),tuple4_get2(t),tuple4_get3(t),tuple4_get4(t)))
-  implicit def t5[A:Typ,B:Typ,C:Typ,D:Typ,E:Typ](t: Rep[(A,B,C,D,E)])(implicit pos: SourceContext) =
+  implicit def t5[A:Typ,B:Typ,C:Typ,D:Typ,E:Typ](t: Rep[(A,B,C,D,E)])(implicit pos: SourceContext): (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E])=
     ((tuple5_get1(t),tuple5_get2(t),tuple5_get3(t),tuple5_get4(t),tuple5_get5(t)))
 
   def tuple2_get1[A:Typ](t: Rep[(A,_)])(implicit pos: SourceContext) : Rep[A]

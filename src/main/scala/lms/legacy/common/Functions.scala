@@ -13,7 +13,7 @@ trait Functions extends Base {
   def doLambda[A:Typ,B:Typ](fun: Rep[A] => Rep[B])(implicit pos: SourceContext): Rep[A => B]
   implicit def fun[A:Typ,B:Typ](f: Rep[A] => Rep[B]): Rep[A=>B] = doLambda(f)
 
-  implicit def toLambdaOps[A:Typ,B:Typ](fun: Rep[A => B]) = new LambdaOps(fun)
+  implicit def toLambdaOps[A:Typ,B:Typ](fun: Rep[A => B]): LambdaOps[A, B] = new LambdaOps(fun)
 
   class LambdaOps[A:Typ,B:Typ](f: Rep[A => B]) {
     def apply(x: Rep[A])(implicit pos: SourceContext): Rep[B] = doApply(f,x)
@@ -150,7 +150,7 @@ trait TupledFunctionsExp extends TupledFunctions with FunctionsExp with TupleOps
   // T will be a tuple of a specified arity
   case class UnboxedTuple[T: Typ](val vars: List[Exp[Any]]) extends Exp[T]
 
-  private def tupledTyp[T](m: Typ[T]): Boolean = m.runtimeClass.getName startsWith "scala.Tuple"
+  private def tupledTyp[T](m: Typ[T]): Boolean = m.runtimeClass.getName `startsWith` "scala.Tuple"
   private def tupledTypOf[T](m: Typ[T], arity: Int): Boolean = m.runtimeClass.getName == "scala.Tuple" + arity
 
   override def unboxedFresh[A:Typ] : Exp[A] = {

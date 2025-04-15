@@ -172,15 +172,15 @@ trait Expressions extends Utils {
     //globalDefs.find(x => x.defines(s).nonEmpty)
 
   def findDefinition[T: Typ](d: Def[T]): Option[Stm] =
-    globalDefs.find(x => x.defines(d).nonEmpty)
+    globalDefs.find(x => infix_defines(x, d).nonEmpty)
 
   def findOrCreateDefinition[T:Typ](d: Def[T], pos: List[SourceContext]): Stm =
-    findDefinition[T](d) map { x => x.defines(d).foreach(_.withPos(pos)); x } getOrElse {
+    findDefinition[T](d) map { x => infix_defines(x, d).foreach(_.withPos(pos)); x } getOrElse {
       createDefinition(fresh[T](pos), d)
     }
 
   def findOrCreateDefinitionExp[T:Typ](d: Def[T], pos: List[SourceContext]): Exp[T] =
-    findOrCreateDefinition(d, pos).defines(d).get
+    infix_defines(findOrCreateDefinition(d, pos), d).get
 
   def createDefinition[T](s: Sym[T], d: Def[T]): Stm = {
     val f = TP(s, d)
@@ -196,7 +196,7 @@ trait Expressions extends Utils {
   object Def {
     def unapply[T](e: Exp[T]): Option[Def[T]] = e match {
       case s @ Sym(_) =>
-        findDefinition(s).flatMap(_.defines(s))
+        findDefinition(s).flatMap(infix_defines(_, s))
       case _ =>
         None
     }

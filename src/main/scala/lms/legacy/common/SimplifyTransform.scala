@@ -72,6 +72,7 @@ trait SimplifyTransform extends internal.FatScheduling {
         s
     }
 
+    /*
     if (y != s) {
       if (y.isInstanceOf[Sym[Any]] && findDefinition(y.asInstanceOf[Sym[Any]]).nonEmpty)
         printdbg("--> replace " + s+"="+x + " by " + y+"="+findDefinition(y.asInstanceOf[Sym[Any]]).get.defines(y.asInstanceOf[Sym[Any]]).get)
@@ -79,6 +80,7 @@ trait SimplifyTransform extends internal.FatScheduling {
         printdbg("--> replace " + s+"="+x + " by " + y)
       t.subst(s) = y // TODO: move out of conditional?
     }
+    */
     y
   }
 
@@ -107,7 +109,7 @@ trait SimplifyTransform extends internal.FatScheduling {
         // alternate strategy: transform thin def, then fatten again (a little detour)
         printdbg("need to transform rhs of fat if/then/else: " + lhs + ", if " + c + " then " + as + " else " + bs)
         val lhs2 = (lhs zip mhs).map { case (s,r) => transformOne(s, r, t) }.distinct.asInstanceOf[List[Sym[Any]]]
-        val mhs2 = lhs2.map(s => findDefinition(s).get.defines(s).get)
+        val mhs2 = lhs2.map(s => infix_defines(findDefinition(s).get, s).get)
         // TBD: we're mirroring the defs in mhs, creating new stms
         // we don't really want new stms: if the defs are just abstract descriptions we only want them updated
         
@@ -124,11 +126,11 @@ trait SimplifyTransform extends internal.FatScheduling {
           case l: AbstractIfThenElse[_] => l
           case Reflect(l: AbstractIfThenElse[_], _, _) => l
         }
-        val cond2 = if (lhs != lhs2) mhs2.map (_.toIf.cond) reduceLeft { (s1,s2) => assert(s1==s2,"conditions don't agree: "+s1+","+s2); s1 }
+        val cond2 = if (lhs != lhs2) mhs2.map (infix_toIf(_).cond) reduceLeft { (s1,s2) => assert(s1==s2,"conditions don't agree: "+s1+","+s2); s1 }
                     else t(c)
-        val as2 = (if (lhs != lhs2) (lhs2 zip (mhs2 map (_.toIf.thenp)))
+        val as2 = (if (lhs != lhs2) (lhs2 zip (mhs2 map (infix_toIf(_).thenp)))
                    else (lhs zip as)) map { case (s,r) => transformIfBody(s,r,t) }
-        val bs2 = (if (lhs != lhs2) (lhs2 zip (mhs2 map (_.toIf.elsep)))
+        val bs2 = (if (lhs != lhs2) (lhs2 zip (mhs2 map (infix_toIf(_).elsep)))
                    else (lhs zip bs)) map { case (s,r) => transformIfBody(s,r,t) }
       
         printdbg("came up with: " + lhs2 + ", if " + cond2 + " then " + as2 + " else " + bs2 + " with subst " + t.subst.mkString(","))

@@ -53,7 +53,7 @@ trait IfThenElseExp extends IfThenElse with EffectExp {
     // (see TestMutation, for now sticking to old behavior)
     
     ////reflectEffect(IfThenElse(cond,thenp,elsep), ae orElse be)
-    reflectEffectInternal(IfThenElse(cond,thenp,elsep), ae orElse be)
+    reflectEffectInternal(IfThenElse(cond,thenp,elsep), infix_orElse(ae,be))
   }
   
   override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = e match {
