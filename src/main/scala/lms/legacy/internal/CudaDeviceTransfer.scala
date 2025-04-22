@@ -4,7 +4,7 @@ package scala.lms.internal
 trait CudaDeviceTransfer extends AbstractDeviceTransfer {
   this: CudaCodegen =>
 
-  val IR: Expressions
+  //val IR: Expressions
   import IR._
 
 

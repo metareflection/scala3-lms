@@ -4,7 +4,7 @@ package scala.lms.internal
 trait OpenCLDeviceTransfer extends AbstractDeviceTransfer {
   this: OpenCLCodegen =>
 
-  val IR: Expressions
+  //val IR: Expressions
   import IR._
 
   def emitSendSlave(tp: Typ[_]): (String,String) = {
