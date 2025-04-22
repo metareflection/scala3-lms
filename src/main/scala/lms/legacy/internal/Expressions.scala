@@ -4,8 +4,6 @@ package internal
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable.ListBuffer
 import java.lang.{StackTraceElement,Thread}
-import scala.Predef.{Manifest => _, _}
-
 
 /**
  * The Expressions trait houses common AST nodes. It also manages a list of encountered Definitions which
@@ -15,21 +13,19 @@ import scala.Predef.{Manifest => _, _}
  */
 trait Expressions extends Utils {
   abstract class Typ[T] {
-    def typeArguments: List[Typ[_]]
+    def typeArguments: List[Typ[?]]
     def arrayTyp: Typ[Array[T]]
-    def runtimeClass: java.lang.Class[_]
-    def <:<(that: Typ[_]): Boolean
-    @deprecated("Use runtimeClass instead; will be removed in 1.1.0", "1.0.0")
-    def erasure: java.lang.Class[_] = runtimeClass
+    def runtimeClass: java.lang.Class[?]
+    def <:<(that: Typ[?]): Boolean
     def isArray = runtimeClass.isArray
   }
 
   case class ManifestTyp[T](mf: Manifest[T]) extends Typ[T] {
-    def typeArguments: List[Typ[?]] = mf.typeArguments.map(ManifestTyp(_))
+    def typeArguments: List[Typ[?]] = mf.typeArguments.map(om => ManifestTyp(manifestOfOptManifest(om)))
     def arrayTyp: Typ[Array[T]] = ManifestTyp(mf.arrayManifest)
-    def runtimeClass: java.lang.Class[_] = mf.runtimeClass
-    def <:<(that: Typ[_]): Boolean = that match { 
-      case ManifestTyp(mf1) => mf.<:<(mf1) 
+    def runtimeClass: java.lang.Class[?] = mf.runtimeClass
+    def <:<(that: Typ[?]): Boolean = that match {
+      case ManifestTyp(mf1) => mf.<:<(mf1)
       case _ => false
     }
     //override def canEqual(that: Any): Boolean = mf.canEqual(that) // TEMP
@@ -39,11 +35,11 @@ trait Expressions extends Utils {
   }
 
   object ClassTyp {
-    def unapply(t: Typ[_]): Option[(Class[_], List[Typ[_]])] = Some(t.runtimeClass, t.typeArguments)
+    def unapply(t: Typ[?]): Option[(Class[?], List[Typ[?]])] = Some(t.runtimeClass, t.typeArguments)
   }
 
   object ArrayTyp {
-    def unapply(t: Typ[_]) =
+    def unapply(t: Typ[?]) =
       if (t.isArray)
         Some(t.typeArguments.head)
       else
@@ -51,18 +47,6 @@ trait Expressions extends Utils {
   }
 
   def typ[T:Typ]: Typ[T] = implicitly[Typ[T]]
-
-  def simpleClassTyp[C](c: Class[C]): Typ[C] =
-    ManifestTyp(scala.reflect.ManifestFactory.classType(c))
-  def simpleClassTyp[C[_],A:Typ](c: Class[C[A]]) = {
-    val ManifestTyp(m) = typ[A]
-    ManifestTyp(scala.reflect.ManifestFactory.classType(c,m))
-  }
-  def simpleClassTyp[C[_,_],A:Typ,B:Typ](c: Class[C[A,B]]) = {
-    val ManifestTyp(mA) = typ[A]
-    val ManifestTyp(mB) = typ[B]
-    ManifestTyp(scala.reflect.ManifestFactory.classType(c,mA,mB))
-  }
 
   abstract class Exp[+T:Typ] { // constants/symbols (atomic)
     def tp: Typ[T @uncheckedVariance] = implicitly[Typ[T]] //invariant position! but hey...

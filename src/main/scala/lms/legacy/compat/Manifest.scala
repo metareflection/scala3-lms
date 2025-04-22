@@ -48,3 +48,9 @@ def printTypeInfoImpl[T: Type](using Quotes): Expr[Unit] = {
 }
 
 implicit val nullManifest: Manifest[Null] = ClassTag(classOf[Null])
+implicit val anyManifest: Manifest[Any] = ClassTag(classOf[Any])
+
+def manifestOfOptManifest(m: OptManifest[?]): Manifest[?] = m match {
+  case m: scala.reflect.Manifest[?] => ClassTag(m.runtimeClass)
+  case NoManifest => anyManifest
+}
