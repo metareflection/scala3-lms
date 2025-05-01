@@ -14,14 +14,14 @@ trait StructOps extends Base {
    * Allows to write things like “val z = new Record { val re = 1.0; val im = -1.0 }; print(z.re)”
    */
 
-  def __new[T:Typ](args: (String, Boolean, Rep[T] => Rep[_])*): Rep[T] = record_new(args)
+  //def __new[T:Typ](args: (String, Boolean, Rep[T] => Rep[?])*): Rep[T] = record_new(args)
 
   class RecordOps(record: Rep[Record]) {
     def selectDynamic[T : Typ](field: String): Rep[T] = record_select[T](record, field)
   }
   implicit def recordToRecordOps(record: Rep[Record]): RecordOps = new RecordOps(record)
 
-  def record_new[T : Typ](fields: Seq[(String, Boolean, Rep[T] => Rep[_])]): Rep[T]
+  //def record_new[T : Typ](fields: Seq[(String, Boolean, Rep[T] => Rep[?])]): Rep[T]
   def record_select[T : Typ](record: Rep[Record], field: String): Rep[T]
   def field[T:Typ](struct: Rep[Any], index: String)(implicit pos: SourceContext): Rep[T]
 }

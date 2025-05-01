@@ -34,15 +34,15 @@ trait NumericOps extends Variables {
 trait NumericOpsExp extends NumericOps with VariablesExp with BaseFatExp {
   this: PrimitiveOpsExp =>
   
-  abstract class DefMN[A:Typ:Numeric] extends Def[A] {
+  abstract class NumericDefMN[A:Typ:Numeric] extends Def[A] {
     def mev = typ[A]
     def aev = implicitly[Numeric[A]]
   }
 
-  case class NumericPlus   [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T]
-  case class NumericMinus  [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T]
-  case class NumericTimes  [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T]
-  case class NumericDivide [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T]
+  case class NumericPlus   [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends NumericDefMN[T]
+  case class NumericMinus  [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends NumericDefMN[T]
+  case class NumericTimes  [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends NumericDefMN[T]
+  case class NumericDivide [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T]) extends NumericDefMN[T]
 
   def numeric_plus   [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext) : Exp[T] = NumericPlus(lhs, rhs)
   def numeric_minus  [T:Numeric:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext) : Exp[T] = NumericMinus(lhs, rhs)

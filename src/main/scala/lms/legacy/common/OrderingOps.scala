@@ -42,18 +42,18 @@ trait OrderingOps extends Base with Variables with BooleanOps with PrimitiveOps 
 
 
 trait OrderingOpsExp extends OrderingOps with VariablesExp {
-  abstract class DefMN[T:Ordering:Typ,A] extends Def[A] {
+  abstract class OrderingDefMN[T:Ordering:Typ,A] extends Def[A] {
     def mev = typ[T]
     def aev = implicitly[Ordering[T]]
   }
-  case class OrderingLT      [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
-  case class OrderingLTEQ    [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
-  case class OrderingGT      [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
-  case class OrderingGTEQ    [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
-  case class OrderingEquiv   [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Boolean]
-  case class OrderingMax     [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,T]
-  case class OrderingMin     [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,T]
-  case class OrderingCompare [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends DefMN[T,Int]
+  case class OrderingLT      [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,Boolean]
+  case class OrderingLTEQ    [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,Boolean]
+  case class OrderingGT      [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,Boolean]
+  case class OrderingGTEQ    [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,Boolean]
+  case class OrderingEquiv   [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,Boolean]
+  case class OrderingMax     [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,T]
+  case class OrderingMin     [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,T]
+  case class OrderingCompare [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T]) extends OrderingDefMN[T,Int]
 
   def ordering_lt     [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Rep[Boolean] = OrderingLT(lhs,rhs)
   def ordering_lteq   [T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Rep[Boolean] = OrderingLTEQ(lhs,rhs)
