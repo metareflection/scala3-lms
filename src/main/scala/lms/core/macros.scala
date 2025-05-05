@@ -12,81 +12,146 @@ class virtualize extends MacroAnnotation {
   ): List[quotes.reflect.Definition] = {
     import quotes.reflect._
 
-    def findMethods(name: String, owner: Symbol): List[Symbol] =
+    def findMethods(owner: Symbol, name: String): List[Symbol] =
         if (owner.isNoSymbol) Nil
         else {
           owner.methodMember(name) ++ owner.companionClass.methodMember(name) match {
-            case Nil => findMethods(name, owner.maybeOwner)
+            case Nil => findMethods(owner.maybeOwner, name)
             case results => results
           }
         }
 
-    def fetchFuncInOut(name: Symbol): (List[TypeRepr], TypeRepr) =
-      name.tree match {
-        case d: DefDef => {
-          val inps = d.paramss.flatMap { param =>
-            param match {
-              case paramClause: TermParamClause =>
-                paramClause.params.collect { case v: ValDef => v.tpt.tpe }
-              case _ => Nil
-            }
-          }
+    def fetchEnclosingClass(s: Symbol): Symbol =
+      if (s.isClassDef) s
+      else if (s.isNoSymbol) Symbol.noSymbol
+      else fetchEnclosingClass(s.maybeOwner)
 
-          (inps, d.returnTpt.tpe)
+    def unRep(t: TypeRepr): Option[TypeRepr] = t match {
+      case AppliedType(f, List(arg)) => {
+        // XXX - do something better
+        if (!(f.show.endsWith("Exp") || f.show.endsWith("Rep"))) {
+          None
         }
-        // TODO: val defs
-        case _ => report.errorAndAbort(s"${name} should be a function")
-      }
-
-    // TODO: error messages
-    def ifThenElseValid(paramTy: TypeRepr)(symb: Symbol): Boolean = {
-      val (inps, out) = fetchFuncInOut(symb)
-
-      inps match {
-        case List(guardTy, thenTy, elseTy) => {
-          // TODO: Generics
-          paramTy <:< guardTy &&
-          ((thenTy, elseTy) match {
-            case (ByNameType(t1), ByNameType(t2)) => t1 =:= t2 && t1 =:= out
-            case _ => false
-          })
+        else {
+          Some(arg)
         }
-        case _ => false
       }
+      case _ => None
+    }
+
+    def makeThis(owner: Symbol): Term = This(fetchEnclosingClass(owner))
+
+    def makeUnit(x: Term, thist: Term, unitf: Term): Term = {
+        val unitt = TypeRepr.of[Unit]
+        val unitTyp = Applied(TypeSelect(thist, "Typ"), List(TypeTree.of[Unit]))
+
+        val unitW = Implicits.search(unitTyp.tpe) match {
+          case success: ImplicitSearchSuccess => success.tree
+        }
+
+        //unit[Unit](())(using Typ.of[Unit])
+        Apply(Apply(TypeApply(unitf, List(TypeTree.of[Unit])), List(x)), List(unitW))
+    }
+
+    def dropTrailingUnit(t: Term, thist: Term, unitf: Term): Term = t match {
+      case Block(Nil, Literal(c)) => {
+        makeUnit(Literal(UnitConstant()), thist, unitf)
+      }
+      case Block(body, Literal(c)) => {
+        // TODO: Should we typecheck this?
+        Block(body, makeUnit(Literal(UnitConstant()), thist, unitf))
+      }
+      case Block(body, v) => {
+        for (stm <- body) {
+          report.error(stm.show)
+        }
+        report.error(v.show)
+        report.errorAndAbort("body of virtualized while loop should have type Rep[Unit]")
+      }
+      case t => t
     }
 
     object Visitor extends TreeMap {
       override def transformTerm(tree: Term)(owner: Symbol): Term =
         tree match {
-          // because the guard to an `If` is always strictly a boolean, we can
-          // cheat and guess that, if the guard is of the form `f(exp)` where
-          // `exp: Rep[Boolean]`, then `f` must be a conversion function
-          //
-          // strictly speaking, it is possible for there to be a user-defined
-          // implicit function from `Rep[Boolean]` to Boolean, so we should
-          // check for the actual name
-          case If(guard@Apply(Select(TypeApply(Ident("__virtualizedBoolConvInternal"), args), name), List(x)), thenp, elsep) => {
+          case If(Apply(conv, List(x)), thenp, elsep) => {
+            if (!conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
+              return super.transformTerm(tree)(owner)
+            }
             val xt = transformTerm(x)(owner)
             val thent = transformTerm(thenp)(owner)
             val elset = transformTerm(elsep)(owner)
 
-            val cands = findMethods("__ifThenElse", owner).filter(ifThenElseValid(x.tpe))
-
-            cands match {
-              case List(ifThenElseSymb) => {
-                report.error(s"${Ref(ifThenElseSymb).tpe.widen}")
-                Apply(Ref(ifThenElseSymb), List(xt, thent, elset))
-              }
-              case x :: xs => {
-                report.error("failed to virtualize: multiple valid candidates for __ifThenElse")
-                super.transformTerm(tree)(owner)
-              }
-              case Nil => {
-                report.error("failed to virtualize: no valid __ifThenElse in scope")
-                super.transformTerm(tree)(owner)
-              }
+            val ttype = thenp.tpe
+            val trep = unRep(ttype) match {
+              case Some(t) => t
+              case None => report.errorAndAbort("arms of virtualized if/else must be Reps")
             }
+
+            val thist = makeThis(owner)
+
+            val tt = unRep(ttype)
+
+            val t = TypeTree.of(using trep.asType)
+
+            val ttyp = Applied(TypeSelect(thist, "Typ"), List(t))
+            val typW = Implicits.search(ttyp.tpe) match {
+              // Failure should be impossible, else we wouldn't have been
+              // able to form the type Rep[T]
+              case success: ImplicitSearchSuccess => success.tree
+            }
+            val srcGen = '{SourceContext.generate}.asTerm
+
+            //Apply(Apply(ite, List(xt, thent, elset)), List(typW, srcGen))
+            Apply(Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset)),
+              List(typW, srcGen))
           }
+
+          case While(Apply(conv, List(x)), bodyp) => {
+            if (!conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
+              return super.transformTerm(tree)(owner)
+            }
+
+            val xt = transformTerm(x)(owner)
+
+            val bodyt = transformTerm(bodyp)(owner)
+
+            val thist = makeThis(owner)
+
+            val unitf = findMethods(owner, "unit") match {
+              case Nil =>
+                report.errorAndAbort("LMS-internal error: no [unit] found for self")
+              case x :: _ => thist.select(x)
+            }
+
+            val srcGen = '{SourceContext.generate}.asTerm
+
+            val body = dropTrailingUnit(bodyt, thist, unitf)
+            // This overload currently can't find the overload for `Rep`s, even
+            // though it can find it if we search manually.
+            /*
+            val r = Select.overloaded(
+                  thist, "__whileDo",
+                  Nil, List(xt, body))
+            */
+            val r = findMethods(owner, "__whileDo") match {
+              // XXX: brittle
+              case _ :: symb :: _xs => Apply(thist.select(symb), List(xt, body))
+              case symb :: _xs => Apply(thist.select(symb), List(xt, body))
+              case Nil => report.errorAndAbort("failed to virtualize: no __whileDo in scope")
+            }
+
+            val result = Apply(r, List(srcGen))
+
+            result
+          }
+
+          /*
+          case Assign(lhs, rhs) => {
+            report.errorAndAbort(tree.show)
+          }
+          */
+
           case _ => super.transformTerm(tree)(owner)
         }
     }

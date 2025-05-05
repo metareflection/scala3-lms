@@ -32,6 +32,11 @@ trait Base extends EmbeddedControls {
   // always lift Unit and Null (for now)
   implicit def unitToRepUnit(x: Unit): Rep[Unit] = unit(x)
   implicit def nullToRepNull(x: Null): Rep[Null] = unit(x)
+
+  given __virtualizedBoolConvInternal: Conversion[Rep[Boolean], Boolean] with
+    def apply(x: Rep[Boolean]) = {
+      throw new RuntimeException("attempted to call __virtualizedBoolConvInternal (did you forget to virtualize?)");
+    }
 }
 
 /**

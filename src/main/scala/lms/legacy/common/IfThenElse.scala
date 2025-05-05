@@ -6,12 +6,6 @@ import scala.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFa
 
 trait IfThenElse extends Base {
   def __ifThenElse[T:Typ](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext): Rep[T]
-
-  // HACK -- bug in scala-virtualized
-  override def __ifThenElse[T](cond: =>Boolean, thenp: => T, elsep: => T) = cond match {
-    case true => thenp
-    case false => elsep
-  }
 }
 
 // TODO: it would be nice if IfThenElseExp would extend IfThenElsePureExp
