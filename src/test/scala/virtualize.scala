@@ -44,17 +44,25 @@ class VirtualizeTest extends TutorialFunSuite {
     check("virtualize-while-empty", Snippet.code)
   }
 
-  /*
   test("while2") {
     object Snippet extends DslDriver[Int, Int] with Dsl {
       def snippet(x: Rep[Int]): Rep[Int] = {
         var y = x
-        while (y < 10) {
-          y = y + 1
+        while(x < 10) {
+          if (x > 5) {
+            y = 2
+            unit(())
+          }
+          else {
+            y = 3
+            unit(())
+          }
+          var z = x
+          unit(())
         }
         y
       }
+      check("virtualize-while2", Snippet.code)
     }
   }
-  */
 }
