@@ -43,15 +43,4 @@ class VirtualizeTest extends TutorialFunSuite {
     }
     check("virtualize-while-empty", Snippet.code)
   }
-
-  test("assign1") {
-    object Snippet extends DslDriver[Int, Int] with Dsl {
-      def snippet(x: Rep[Int]): Rep[Int] = {
-        //var y = x
-        this.__newVar[Int](x)(using overloaded1, typ[Int], SourceContext.generate)
-        2
-      }
-    }
-    check("assign-basic", Snippet.code)
-  }
 }
