@@ -12,6 +12,11 @@ class virtualize extends MacroAnnotation {
   ): List[quotes.reflect.Definition] = {
     import quotes.reflect._
 
+    trait RepOrVar
+    case class RepW(t: TypeRepr) extends RepOrVar
+    case class VarW(t: TypeRepr) extends RepOrVar
+    case class Bare(t: TypeRepr) extends RepOrVar
+
     def findMethods(owner: Symbol, name: String): List[Symbol] =
         if (owner.isNoSymbol) Nil
         else {
@@ -111,11 +116,18 @@ class virtualize extends MacroAnnotation {
     object Visitor extends TreeMap {
       override def transformTerm(tree: Term)(owner: Symbol): Term =
         tree match {
-          case If(Apply(conv, List(x)), thenp, elsep) => {
-            if (!conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
-              return super.transformTerm(tree)(owner)
-            }
-            val xt = this.transformTerm(x)(owner)
+          case Apply(Select(lhs, "=="), List(rhs)) => {
+            report.errorAndAbort(lhs.show + " == " + rhs.show)
+          }
+          case If(guard@Apply(conv, List(x)), thenp, elsep) => {
+            val xt =
+              if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
+                this.transformTerm(x)(owner)
+              } else if (conv.show.endsWith("==")) {
+                this.transformTerm(guard)(owner)
+              } else {
+                return super.transformTerm(tree)(owner)
+              }
             val thent = this.transformTerm(thenp)(owner)
             val elset = this.transformTerm(elsep)(owner)
 

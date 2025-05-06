@@ -2,6 +2,7 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
+
 import scala.lms.util.OverloadHack
 
 trait LiftEquals extends Base {
@@ -13,6 +14,16 @@ trait LiftEquals extends Base {
 }
 
 trait Equal extends Base with Variables with OverloadHack {
+  given repRepEqual[A,B]: CanEqual[Rep[A], Rep[B]] = CanEqual.derived
+  given repVarEqual[A,B]: CanEqual[Rep[A], Var[B]] = CanEqual.derived
+  given repBareEqual[A,B]: CanEqual[Rep[A], B] = CanEqual.derived
+  given varRepEqual[A,B]: CanEqual[Var[A], Rep[B]] = CanEqual.derived
+  given varVarEqual[A,B]: CanEqual[Var[A], Var[B]] = CanEqual.derived
+  given varBareEqual[A,B]: CanEqual[Var[A], B] = CanEqual.derived
+  given bareRepEqual[A,B]: CanEqual[A, Rep[B]] = CanEqual.derived
+  given bareVarEqual[A,B]: CanEqual[A, Var[B]] = CanEqual.derived
+  // do not create barebare equal
+
   // TODO: we need a better way of handling this, too many combinations
   // this occurs because Rep is an object, so it has an == and != method defined by default,
   // so there is no type error to force the implicit conversions
