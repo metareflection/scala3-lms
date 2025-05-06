@@ -184,25 +184,72 @@ class virtualize extends MacroAnnotation {
             result
           }
 
-          /*
-          case Assign(lhs, rhs) => {
-            report.errorAndAbort("in assign")
+          case Assign(lhs, rhsp) => {
+            if (!lhs.tpe.show.endsWith("Var")) {
+              return super.transformTerm(tree)(owner)
+            }
+
+            val thist = makeThis(owner)
+            val rhs = transformTerm(rhsp)(owner)
+            val srcGen = '{SourceContext.generate}.asTerm
+
+            (unRep(rhs.tpe.widen), unVar(rhs.tpe.widen)) match {
+              case (Some(t), _) => {
+                val tytree = TypeTree.of(using t.asType)
+                val ttyp = Applied(TypeSelect(thist, "Typ"), List(tytree))
+                val typW = Implicits.search(ttyp.tpe) match {
+                  case success: ImplicitSearchSuccess => success.tree
+                }
+                val overload1 = Implicits.search(TypeSelect(thist, "Overloaded1").tpe) match {
+                  case success: ImplicitSearchSuccess => success.tree
+                }
+                val assign = Select.overloaded(thist, "__assign", List(t), List(lhs, rhs))
+                Apply(assign, List(overload1, typW, srcGen))
+              }
+              case (_, Some(t)) => {
+                val tytree = TypeTree.of(using t.asType)
+                val ttyp = Applied(TypeSelect(thist, "Typ"), List(tytree))
+                val typW = Implicits.search(ttyp.tpe) match {
+                  case success: ImplicitSearchSuccess => success.tree
+                }
+                val overload2 = Implicits.search(TypeSelect(thist, "Overloaded2").tpe) match {
+                  case success: ImplicitSearchSuccess => success.tree
+                }
+                val assign = Select.overloaded(thist, "__assign", List(t), List(lhs, rhs))
+                Apply(assign, List(overload2, typW, srcGen))
+              }
+              case (_, _) => {
+                val t = rhs.tpe.widen
+                val tytree = TypeTree.of(using t.asType)
+                val ttyp = Applied(TypeSelect(thist, "Typ"), List(tytree))
+                val typW = Implicits.search(ttyp.tpe) match {
+                  case success: ImplicitSearchSuccess => success.tree
+                }
+                val assign = Select.overloaded(thist, "__assign", List(t), List(rhs))
+                // __newVar[T](init)(using typW, pos)
+                Apply(assign, List(typW, srcGen))
+              }
+            }
           }
-          */
 
           case _ => super.transformTerm(tree)(owner)
         }
 
       override def transformStatement(tree: Statement)(owner: Symbol): Statement = tree match {
-        case ValDef(name, ty, mrhs) => {
-          // `ty` is the type of `rhs`
+        // `ty` is the type of `rhs`
+        case ValDef(name, ty, Some(t)) => {
+          // If `Typ` is not in scope, do nothing
+          if (fetchEnclosingClass(owner).typeMember("Typ").isNoSymbol) {
+            return super.transformStatement(tree)(owner)
+          }
 
-          val rhs = mrhs match {
-            case None => report.errorAndAbort("uninitialized variables are not supported")
-            case Some(t) => t
+          ty match {
+            case _: Singleton => return super.transformStatement(tree)(owner)
+            case _ => ()
           }
 
           val thist = makeThis(owner)
+          val rhs = transformTerm(t)(owner)
           val srcGen = '{SourceContext.generate}.asTerm
 
           val newrhs: Term = (unRep(ty.tpe.widen), unVar(ty.tpe.widen)) match {
@@ -217,9 +264,9 @@ class virtualize extends MacroAnnotation {
               }
               val newvar = Select.overloaded(thist, "__newVar", List(t), List(rhs))
               // __newVar[T](init)(using overload1, typW, pos)
-              Apply(
-                newvar,
-                List(overload1, typW, srcGen))
+              val result = Apply(newvar, List(overload1, typW, srcGen))
+              report.error(result.show)
+              result
             }
             case (_, Some(t)) => {
               val tytree = TypeTree.of(using t.asType)
@@ -232,9 +279,7 @@ class virtualize extends MacroAnnotation {
               }
               val newvar = Select.overloaded(thist, "__newVar", List(t), List(rhs))
               // __newVar[T](init)(using overload2, typW, pos)
-              Apply(
-                newvar,
-                List(overload2, typW, srcGen))
+              Apply(newvar, List(overload2, typW, srcGen))
             }
             case (_, _) => {
               val t = ty.tpe.widen
@@ -245,9 +290,7 @@ class virtualize extends MacroAnnotation {
               }
               val newvar = Select.overloaded(thist, "__newVar", List(t), List(rhs))
               // __newVar[T](init)(using typW, pos)
-              Apply(
-                newvar,
-                List(typW, srcGen))
+              Apply(newvar, List(typW, srcGen))
             }
           }
 

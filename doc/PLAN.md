@@ -7,6 +7,10 @@ an implicit conversion method from `Rep[Bool]` to `Bool` because we'll
 rewrite it anyway, but it will make field accesses and especially pattern
 matching very difficult.
 
+- Because `Rep` and related types are trait members, it is very difficult to
+  pattern-match against them in macros. Currently, we use string-matching,
+  which is very brittle.
+
 ## Notes from lms-clean
 
 `lms-clean` seems to define a much more general virtualization mechanism
