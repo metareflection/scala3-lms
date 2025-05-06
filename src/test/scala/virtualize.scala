@@ -43,4 +43,14 @@ class VirtualizeTest extends TutorialFunSuite {
     }
     check("virtualize-while-empty", Snippet.code)
   }
+
+  test("array") {
+    object Snippet extends DslDriver[Array[Int], Array[Int]] with Dsl {
+      def snippet(x: Rep[Array[Int]]): Rep[Array[Int]] = {
+        x(0) = 1
+        x
+      }
+    }
+    check("array-assign", Snippet.code)
+  }
 }
