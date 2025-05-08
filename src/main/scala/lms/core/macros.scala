@@ -155,6 +155,7 @@ class virtualize extends MacroAnnotation {
               Select.overloaded(thist, "__equal", List(lty, rty), List(lhs, rhs)),
               List(overload, ltyW, rtyW, srcGen))
           }
+
           case If(guard@Apply(conv, List(x)), thenp, elsep) => {
             val xt =
               if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
@@ -164,6 +165,14 @@ class virtualize extends MacroAnnotation {
               } else {
                 return super.transformTerm(tree)(owner)
               }
+
+            // HACK: In the case of `if (e1 == e2)` where both `e1` and `e2` are
+            // non-Rep (stage-time) expressions, don't rewrite the `if` expr.
+            val guardRep = unRep(xt.tpe) match {
+              case Some(_) => ()
+              case None => return super.transformTerm(tree)(owner)
+            }
+
             val thent = this.transformTerm(thenp)(owner)
             val elset = this.transformTerm(elsep)(owner)
 
