@@ -78,25 +78,24 @@ class virtualize extends MacroAnnotation {
       case stm => (List(stm), Literal(UnitConstant()))
     }
 
+    // CR cam: It's not clear to me that this is scope-safe.
     def flattenBlock(t: Term): Term = {
       val (body, v) = flattenBlockT(t)
       Block(body, v)
     }
 
-    def dropTrailingUnitInWhileBody(t: Term, thist: Term, unitf: Term): Term =
+    def handleTrailingLiteral(t: Term, thist: Term, unitf: Term): Option[Term] =
       flattenBlock(t) match {
         case Block(Nil, Literal(c)) => {
-          makeUnit(Literal(UnitConstant()), thist, unitf)
+          Some(makeUnit(Literal(c), thist, unitf))
         }
         case Block(body, Literal(c)) => {
           // TODO: Should we typecheck [body] here?
-          Block(body, makeUnit(Literal(UnitConstant()), thist, unitf))
+          Some(Block(body, makeUnit(Literal(c), thist, unitf)))
         }
-        case Block(body, v) => {
-          report.errorAndAbort("body of virtualized while loop should have type Rep[Unit]: " + v.show)
-        }
-        case t => t
+        case t => None
       }
+
 
     def findTypW(thist: Term, trep: TypeRepr): Term = {
         val t = TypeTree.of(using trep.asType)
@@ -173,17 +172,28 @@ class virtualize extends MacroAnnotation {
               case None => return super.transformTerm(tree)(owner)
             }
 
-            val thent = this.transformTerm(thenp)(owner)
-            val elset = this.transformTerm(elsep)(owner)
+            val thist = makeThis(owner)
+            val unitf = findMethods(owner, "unit") match {
+              case Nil =>
+                report.errorAndAbort("LMS-internal error: no [unit] found for self")
+              case x :: _ => thist.select(x)
+            }
 
-            val ttype = thenp.tpe.widen
+            def maybeWrapTrailingLiteral(t: Term): Term =
+              handleTrailingLiteral(t, thist, unitf) match {
+                case Some(t) => t
+                case None => t
+              }
+
+            val thent = maybeWrapTrailingLiteral(this.transformTerm(thenp)(owner))
+            val elset = maybeWrapTrailingLiteral(this.transformTerm(elsep)(owner))
+
+            val ttype = thent.tpe.widen
             val trep = unRep(ttype) match {
               case Some(t) => t
               case None =>
                 report.errorAndAbort("arms of virtualized if/else must be Reps, instead got " + ttype.show)
             }
-
-            val thist = makeThis(owner)
 
             val tt = unRep(ttype)
 
@@ -214,7 +224,11 @@ class virtualize extends MacroAnnotation {
 
             val srcGen = '{SourceContext.generate}.asTerm
 
-            val body = dropTrailingUnitInWhileBody(bodyt, thist, unitf)
+            val body = handleTrailingLiteral(bodyt, thist, unitf) match {
+              case Some(body) => body
+              case None =>
+                report.errorAndAbort("body of virtualized while loop should have type Rep[Unit]")
+            }
             // This overload currently can't find the overload for
             // `__whileDo(Rep[Boolean], Rep[Unit])` even though it can find it
             // if we search manually.
