@@ -4,3 +4,5 @@ target/
 .bsp/
 .metals/
 *.actual.*
+src/test/scala/playground.scala
+src/out/playground/

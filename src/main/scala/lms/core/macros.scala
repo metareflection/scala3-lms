@@ -112,6 +112,10 @@ class virtualize extends MacroAnnotation {
     object Visitor extends TreeMap {
       override def transformTerm(tree: Term)(owner: Symbol): Term =
         tree match {
+          case Apply(
+            Select(_, "boolToBoolRep"),
+            List(x@Apply(Select(_, "=="), List(_)))) => this.transformTerm(x)(owner)
+
           case Apply(Select(lhsp, "=="), List(rhsp)) => {
             val lhs = this.transformTerm(lhsp)(owner)
             val rhs = this.transformTerm(rhsp)(owner)

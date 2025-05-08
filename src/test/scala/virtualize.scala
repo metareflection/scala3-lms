@@ -33,13 +33,26 @@ class VirtualizeTest extends TutorialFunSuite {
     check("if-nested", Snippet.code)
   }
 
-  test("if tutorial") {
+  test("equality guard") {
     object Snippet extends DslDriver[Int, Int] with Dsl {
       def snippet(x: Rep[Int]): Rep[Int] = {
         if (x == 1) 2 else x
       }
     }
     check("if-tutorial", Snippet.code)
+  }
+
+  test("function calls") {
+    object Snippet extends DslDriver[Int, Int] with Dsl {
+      def snippet(x: Rep[Int]) = {
+        def compute(b: Rep[Boolean]): Rep[Int] = {
+          // the if is deferred to the second stage
+          if (b) 1 else x
+        }
+        compute(x==1)
+      }
+    }
+    check("func-tutorial", Snippet.code)
   }
 
   test("while empty") {
