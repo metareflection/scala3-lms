@@ -17,7 +17,7 @@ class VirtualizeTest extends TutorialFunSuite {
           }
       }
     }
-    check("virtualize-if-basic", Snippet.code)
+    check("if-basic", Snippet.code)
   }
 
   test("if nested") {
@@ -30,16 +30,16 @@ class VirtualizeTest extends TutorialFunSuite {
           }
       }
     }
-    check("virtualize-if-nested", Snippet.code)
+    check("if-nested", Snippet.code)
   }
 
-  test("if cond") {
+  test("if tutorial") {
     object Snippet extends DslDriver[Int, Int] with Dsl {
       def snippet(x: Rep[Int]): Rep[Int] = {
         if (x == 1) 2 else x
       }
     }
-    check("virtualize-if-tutorial", Snippet.code)
+    check("if-tutorial", Snippet.code)
   }
 
   test("while empty") {
@@ -50,7 +50,7 @@ class VirtualizeTest extends TutorialFunSuite {
         0
       }
     }
-    check("virtualize-while-empty", Snippet.code)
+    check("while-empty", Snippet.code)
   }
 
   test("array") {

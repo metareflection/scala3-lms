@@ -31,39 +31,24 @@ class virtualize extends MacroAnnotation {
       else if (s.isNoSymbol) Symbol.noSymbol
       else fetchEnclosingClass(s.maybeOwner)
 
-    def unRep(t: TypeRepr): Option[TypeRepr] = t match {
+    def repOrVar(t: TypeRepr): RepOrVar = t.widen match {
       case AppliedType(f, List(arg)) =>
         // XXX - do something better
-        if (!(f.show.endsWith("Exp") || f.show.endsWith("Rep"))) {
-          None
+        if (f.show.endsWith("Exp") || f.show.endsWith("Rep")) {
+          RepW(arg)
+        }
+        else if (f.show.endsWith("Var")) {
+          VarW(arg)
         }
         else {
-          Some(arg)
+          Bare(arg)
         }
-      case t =>
-        if (t =:= TypeRepr.of[Unit]) {
-          Some(TypeRepr.of[Unit])
-        }
-        else {
-          None
-        }
+      case t => Bare(t)
     }
 
-    def unVar(t: TypeRepr): Option[TypeRepr] = t match {
-      case AppliedType(f, List(arg)) =>
-        if (!(f.show.endsWith("Var"))) {
-          None
-        }
-        else {
-          Some(arg)
-        }
-      case t =>
-        if (t =:= TypeRepr.of[Unit]) {
-          Some(TypeRepr.of[Unit])
-        }
-        else {
-          None
-        }
+    def unRep(t: TypeRepr): Option[TypeRepr] = repOrVar(t) match {
+      case RepW(t) => Some(t)
+      case _ => None
     }
 
     def makeThis(owner: Symbol): Term = This(fetchEnclosingClass(owner))
@@ -113,11 +98,58 @@ class virtualize extends MacroAnnotation {
         case t => t
       }
 
+    def findTypW(thist: Term, trep: TypeRepr): Term = {
+        val t = TypeTree.of(using trep.asType)
+        val ttyp = Applied(TypeSelect(thist, "Typ"), List(t))
+        val typW = Implicits.search(ttyp.tpe) match {
+          // Failure should be impossible, else we wouldn't have been
+          // able to form the type Rep[T]
+          case success: ImplicitSearchSuccess => success.tree
+        }
+        typW
+    }
+
     object Visitor extends TreeMap {
       override def transformTerm(tree: Term)(owner: Symbol): Term =
         tree match {
-          case Apply(Select(lhs, "=="), List(rhs)) => {
-            report.errorAndAbort(lhs.show + " == " + rhs.show)
+          case Apply(Select(lhsp, "=="), List(rhsp)) => {
+            val lhs = this.transformTerm(lhsp)(owner)
+            val rhs = this.transformTerm(rhsp)(owner)
+
+            val thist = makeThis(owner)
+
+            // Overload order:
+            //   RepRep
+            //   RepVar
+            //   VarRep
+            //   RepBare
+            //   BareRep
+            //   VarBare
+            //   BareVar
+            //   VarVar
+            val (lty, rty, overloadN) = (repOrVar(lhs.tpe), repOrVar(rhs.tpe)) match {
+              case (RepW(lty), RepW(rty)) => (lty, rty, "Overloaded1")
+              case (RepW(lty), VarW(rty)) => (lty, rty, "Overloaded2")
+              case (VarW(lty), RepW(rty)) => (lty, rty, "Overloaded3")
+              case (RepW(lty), Bare(rty)) => (lty, rty, "Overloaded4")
+              case (Bare(lty), RepW(rty)) => (lty, rty, "Overloaded5")
+              case (VarW(lty), Bare(rty)) => (lty, rty, "Overloaded6")
+              case (Bare(lty), VarW(rty)) => (lty, rty, "Overloaded7")
+              case (VarW(lty), VarW(rty)) => (lty, rty, "Overloaded8")
+              case (Bare(lty), Bare(rty)) => return tree
+            }
+
+            val overload = Implicits.search(TypeSelect(thist, overloadN).tpe) match {
+              case success: ImplicitSearchSuccess => success.tree
+            }
+            val ltyW = findTypW(thist, lty)
+            val rtyW = findTypW(thist, rty)
+            val srcGen = '{SourceContext.generate}.asTerm
+
+            // this.__equal[A, B](a, b)(using o, mA, mB, pos)
+            Apply(
+              Select.overloaded(thist, "__equal", List(lty, rty), List(lhs, rhs)),
+              List(overload, ltyW, rtyW, srcGen))
           }
           case If(guard@Apply(conv, List(x)), thenp, elsep) => {
             val xt =
@@ -142,14 +174,7 @@ class virtualize extends MacroAnnotation {
 
             val tt = unRep(ttype)
 
-            val t = TypeTree.of(using trep.asType)
-
-            val ttyp = Applied(TypeSelect(thist, "Typ"), List(t))
-            val typW = Implicits.search(ttyp.tpe) match {
-              // Failure should be impossible, else we wouldn't have been
-              // able to form the type Rep[T]
-              case success: ImplicitSearchSuccess => success.tree
-            }
+            val typW = findTypW(thist, trep)
             val srcGen = '{SourceContext.generate}.asTerm
 
             //Apply(Apply(ite, List(xt, thent, elset)), List(typW, srcGen))
