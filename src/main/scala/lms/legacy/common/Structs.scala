@@ -431,7 +431,7 @@ trait ScalaGenStruct extends ScalaGenBase with BaseGenStruct {
   }
 
   override def remap[A](m: Typ[A]) = m match {
-    case ManifestTyp(s) if s <:< manifest[Record] => structName(m)
+    case ManifestTyp(s) if s <:< Manifest.of(using scala.reflect.ClassTag(classOf[Record])) => structName(m)
     case _ => super.remap(m)
   }
 

@@ -60,8 +60,8 @@ trait ArrayOps extends Variables {
 trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp {
 
   implicit def arrayTyp[T:Typ]: Typ[Array[T]] = {
-    implicit val ManifestTyp(m: Manifest[T]) = typ[T]
-    manifestTyp
+    val m = typ[T]
+    m.arrayTyp
   }
 
   case class ArrayNew[T:Typ](n: Exp[Int]) extends Def[Array[T]] {

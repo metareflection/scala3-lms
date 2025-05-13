@@ -21,8 +21,8 @@ trait Expressions extends Utils {
   }
 
   case class ManifestTyp[T](mf: Manifest[T]) extends Typ[T] {
-    def typeArguments: List[Typ[?]] = mf.typeArguments.map(om => ManifestTyp(manifestOfOptManifest(om)))
-    def arrayTyp: Typ[Array[T]] = ManifestTyp(mf.arrayManifest)
+    def typeArguments: List[Typ[?]] = mf.typeArguments.map(ManifestTyp(_))
+    def arrayTyp: Typ[Array[T]] = ManifestTyp(Manifest.arrayManifest(mf))
     def runtimeClass: java.lang.Class[?] = mf.runtimeClass
     def <:<(that: Typ[?]): Boolean = that match {
       case ManifestTyp(mf1) => mf.<:<(mf1)
