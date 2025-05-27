@@ -12,7 +12,7 @@ class virtualize extends MacroAnnotation {
   ): List[quotes.reflect.Definition] = {
     import quotes.reflect._
 
-    trait RepOrVar
+    sealed trait RepOrVar
     case class RepW(t: TypeRepr) extends RepOrVar
     case class VarW(t: TypeRepr) extends RepOrVar
     case class Bare(t: TypeRepr) extends RepOrVar
@@ -54,15 +54,15 @@ class virtualize extends MacroAnnotation {
     def makeThis(owner: Symbol): Term = This(fetchEnclosingClass(owner))
 
     def makeUnit(x: Term, thist: Term, unitf: Term): Term = {
-        val unitt = TypeRepr.of[Unit]
-        val unitTyp = Applied(TypeSelect(thist, "Typ"), List(TypeTree.of[Unit]))
+      val unitt = TypeRepr.of[Unit]
+      val unitTyp = Applied(TypeSelect(thist, "Typ"), List(TypeTree.of[Unit]))
 
-        val unitW = Implicits.search(unitTyp.tpe) match {
-          case success: ImplicitSearchSuccess => success.tree
-        }
+      val unitW = Implicits.search(unitTyp.tpe) match {
+        case success: ImplicitSearchSuccess => success.tree
+      }
 
-        //unit[Unit](())(using Typ.of[Unit])
-        Apply(Apply(TypeApply(unitf, List(TypeTree.of[Unit])), List(x)), List(unitW))
+      //unit[Unit](())(using Typ.of[Unit])
+      Apply(Apply(TypeApply(unitf, List(TypeTree.of[Unit])), List(x)), List(unitW))
     }
 
     def flattenBlockT(t: Statement): (List[Statement], Term) = t match {
@@ -99,28 +99,51 @@ class virtualize extends MacroAnnotation {
       }
 
     def findTypW(thist: Term, trep: TypeRepr): Term = {
-        val t = TypeTree.of(using trep.asType)
-        val ttyp = Applied(TypeSelect(thist, "Typ"), List(t))
-        val typW = Implicits.search(ttyp.tpe) match {
-          // Failure should be impossible, else we wouldn't have been
-          // able to form the type Rep[T]
-          case success: ImplicitSearchSuccess => success.tree
-        }
-        typW
+      val t = TypeTree.of(using trep.asType)
+      val ttyp = Applied(TypeSelect(thist, "Typ"), List(t))
+      val typW = Implicits.search(ttyp.tpe) match {
+        // Failure should be impossible, else we wouldn't have been
+        // able to form the type Rep[T]
+        case success: ImplicitSearchSuccess => success.tree
+      }
+      typW
+    }
+
+    def findOverload(thist: Term, n: Int): Term = {
+      Implicits.search(TypeSelect(thist, "Overloaded" + n).tpe) match {
+        case success: ImplicitSearchSuccess => success.tree
+      }
     }
 
     object Visitor extends TreeMap {
-      override def transformTerm(tree: Term)(owner: Symbol): Term =
+      val vars: ScopedVarMap[(Symbol, TypeRepr, Term)] = new ScopedVarMap()
+
+      override def transformTerm(tree: Term)(owner: Symbol): Term = {
         tree match {
+          case Ident(name) => {
+            vars.lookup(name) match {
+              case Some((sym, t, ttyp)) => {
+                val thist = makeThis(owner)
+                val srcGen = '{SourceContext.generate}.asTerm
+                // this.readVar[T](x)(using ttyp, srcGen)
+                Apply(
+                  Select.overloaded(thist, "readVar", List(t), List(Ref(sym))),
+                  List(ttyp, srcGen))
+              }
+              case None => tree
+            }
+          }
+
           case Apply(
             Select(_, "boolToBoolRep"),
             List(x@Apply(Select(_, "=="), List(_)))) => this.transformTerm(x)(owner)
 
           case Apply(Select(lhsp, "=="), List(rhsp)) => {
+            val thist = makeThis(owner)
+            val srcGen = '{SourceContext.generate}.asTerm
+
             val lhs = this.transformTerm(lhsp)(owner)
             val rhs = this.transformTerm(rhsp)(owner)
-
-            val thist = makeThis(owner)
 
             // Overload order:
             //   RepRep
@@ -131,24 +154,21 @@ class virtualize extends MacroAnnotation {
             //   VarBare
             //   BareVar
             //   VarVar
-            val (lty, rty, overloadN) = (repOrVar(lhs.tpe), repOrVar(rhs.tpe)) match {
-              case (RepW(lty), RepW(rty)) => (lty, rty, "Overloaded1")
-              case (RepW(lty), VarW(rty)) => (lty, rty, "Overloaded2")
-              case (VarW(lty), RepW(rty)) => (lty, rty, "Overloaded3")
-              case (RepW(lty), Bare(rty)) => (lty, rty, "Overloaded4")
-              case (Bare(lty), RepW(rty)) => (lty, rty, "Overloaded5")
-              case (VarW(lty), Bare(rty)) => (lty, rty, "Overloaded6")
-              case (Bare(lty), VarW(rty)) => (lty, rty, "Overloaded7")
-              case (VarW(lty), VarW(rty)) => (lty, rty, "Overloaded8")
+            val (lty, rty, n) = (repOrVar(lhs.tpe), repOrVar(rhs.tpe)) match {
+              case (RepW(lty), RepW(rty)) => (lty, rty, 1)
+              case (RepW(lty), VarW(rty)) => (lty, rty, 2)
+              case (VarW(lty), RepW(rty)) => (lty, rty, 3)
+              case (RepW(lty), Bare(rty)) => (lty, rty, 4)
+              case (Bare(lty), RepW(rty)) => (lty, rty, 5)
+              case (VarW(lty), Bare(rty)) => (lty, rty, 6)
+              case (Bare(lty), VarW(rty)) => (lty, rty, 7)
+              case (VarW(lty), VarW(rty)) => (lty, rty, 8)
               case (Bare(lty), Bare(rty)) => return tree
             }
 
-            val overload = Implicits.search(TypeSelect(thist, overloadN).tpe) match {
-              case success: ImplicitSearchSuccess => success.tree
-            }
+            val overload = findOverload(thist, n)
             val ltyW = findTypW(thist, lty)
             val rtyW = findTypW(thist, rty)
-            val srcGen = '{SourceContext.generate}.asTerm
 
             // this.__equal[A, B](a, b)(using o, mA, mB, pos)
             Apply(
@@ -157,6 +177,9 @@ class virtualize extends MacroAnnotation {
           }
 
           case If(guard@Apply(conv, List(x)), thenp, elsep) => {
+            val thist = makeThis(owner)
+            val srcGen = '{SourceContext.generate}.asTerm
+
             val xt =
               if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
                 this.transformTerm(x)(owner)
@@ -183,12 +206,9 @@ class virtualize extends MacroAnnotation {
                 report.errorAndAbort("arms of virtualized if/else must be Reps, instead got " + ttype.show)
             }
 
-            val thist = makeThis(owner)
-
             val tt = unRep(ttype)
 
             val typW = findTypW(thist, trep)
-            val srcGen = '{SourceContext.generate}.asTerm
 
             //Apply(Apply(ite, List(xt, thent, elset)), List(typW, srcGen))
             Apply(Select.overloaded(thist, "__ifThenElse", List(trep), List(xt, thent, elset)),
@@ -196,6 +216,9 @@ class virtualize extends MacroAnnotation {
           }
 
           case While(Apply(conv, List(x)), bodyp) => {
+            val thist = makeThis(owner)
+            val srcGen = '{SourceContext.generate}.asTerm
+
             if (!conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
               return super.transformTerm(tree)(owner)
             }
@@ -204,15 +227,11 @@ class virtualize extends MacroAnnotation {
 
             val bodyt = this.transformTerm(bodyp)(owner)
 
-            val thist = makeThis(owner)
-
             val unitf = findMethods(owner, "unit") match {
               case Nil =>
                 report.errorAndAbort("LMS-internal error: no [unit] found for self")
               case x :: _ => thist.select(x)
             }
-
-            val srcGen = '{SourceContext.generate}.asTerm
 
             val body = dropTrailingUnitInWhileBody(bodyt, thist, unitf)
             // This overload currently can't find the overload for
@@ -236,6 +255,79 @@ class virtualize extends MacroAnnotation {
 
           case _ => super.transformTerm(tree)(owner)
         }
+      }
+
+      override def transformStatement(tree: Statement)(owner: Symbol): Statement = {
+        val srcGen = '{SourceContext.generate}.asTerm
+        tree match {
+          case ValDef(name, tptp, Some(rhsp)) => {
+            val sym = tree.symbol
+
+            if (!sym.flags.is(Flags.Mutable)) {
+              return super.transformStatement(tree)(owner)
+            }
+
+            val thist = makeThis(owner)
+            val rhs = this.transformTerm(rhsp)(owner)
+
+            val (tpt, tgt, trep, ttyp) = repOrVar(rhs.tpe) match {
+              case RepW(t) => {
+                val ttyp = findTypW(thist, t)
+                val overload = findOverload(thist, 1)
+                val newVarT = Select.overloaded(thist, "__newVar", List(t), List(rhs))
+                val varT = Applied(TypeSelect(thist, "Var"), List(TypeTree.of(using t.asType)))
+                val result = Apply(newVarT, List(overload, ttyp, srcGen))
+
+                (varT, result, t, ttyp)
+              }
+
+              case VarW(t) => {
+                val ttyp = findTypW(thist, t)
+                val overload = findOverload(thist, 2)
+                val newVarT = Select.overloaded(thist, "__newVar", List(t), List(rhs))
+                val varT = TypeTree.of(using rhs.tpe.asType)
+                val result = Apply(newVarT, List(overload, ttyp, srcGen))
+
+                (varT, result, t, ttyp)
+              }
+
+              // XXX - This will cause us to delay _every_ mutable variable, even
+              // ones that might be able to be discharged at stage-time.
+              case Bare(trep) => {
+                // We can't use `findTypW` because we actually might be working
+                // with a non-reifiable stage-time construct.
+                val t = TypeTree.of(using trep.asType)
+                val typt = Applied(TypeSelect(thist, "Typ"), List(t))
+                val ttyp = Implicits.search(typt.tpe) match {
+                  // Failure should be impossible, else we wouldn't have been
+                  // able to form the type Rep[T]
+                  case success: ImplicitSearchSuccess => success.tree
+                  case failure: ImplicitSearchFailure =>
+                    return super.transformStatement(tree)(owner)
+                }
+                val newVarT = Select.overloaded(thist, "__newVar", List(trep), List(rhs))
+                val varT = Applied(TypeSelect(thist, "Var"), List(t))
+                val result = Apply(newVarT, List(ttyp, srcGen))
+
+                (varT, result, trep, ttyp)
+              }
+            }
+
+            val privateWithin = sym.privateWithin match {
+              case Some(ty) => ty.typeSymbol
+              case None => Symbol.noSymbol
+            }
+
+            val newSym = Symbol.newVal(owner, name, tpt.tpe, sym.flags, privateWithin)
+
+            vars.add(name, (newSym, trep, ttyp))
+
+            ValDef(newSym, Some(tgt))
+          }
+
+          case _ => super.transformStatement(tree)(owner)
+        }
+      }
     }
 
     tree match {
