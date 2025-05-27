@@ -2,6 +2,8 @@ package scala.lms
 package tests
 
 import java.io._
+import scala.reflect.ClassTag
+
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.lms.common._
@@ -92,11 +94,11 @@ trait DslImpl extends DslExp { q =>
   }
 }
 
-abstract class DslSnippet[A:Manifest,B:Manifest] extends Dsl {
+abstract class DslSnippet[A:ClassTag,B:ClassTag] extends Dsl {
   def snippet(x: Rep[A]): Rep[B]
 }
 
-abstract class DslDriver[A:Manifest,B:Manifest] extends DslSnippet[A,B] with DslImpl {
+abstract class DslDriver[A:ClassTag,B:ClassTag] extends DslSnippet[A,B] with DslImpl {
   lazy val code: String = {
     val source = new java.io.StringWriter()
     codegen.emitSource(

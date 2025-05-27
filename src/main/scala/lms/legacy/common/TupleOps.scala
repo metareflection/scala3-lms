@@ -24,23 +24,23 @@ trait TupleOps extends Base {
   implicit def t5[A:Typ,B:Typ,C:Typ,D:Typ,E:Typ](t: Rep[(A,B,C,D,E)])(implicit pos: SourceContext): (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E])=
     ((tuple5_get1(t),tuple5_get2(t),tuple5_get3(t),tuple5_get4(t),tuple5_get5(t)))
 
-  def tuple2_get1[A:Typ](t: Rep[(A,_)])(implicit pos: SourceContext) : Rep[A]
-  def tuple2_get2[B:Typ](t: Rep[(_,B)])(implicit pos: SourceContext) : Rep[B]
+  def tuple2_get1[A:Typ](t: Rep[(A,?)])(implicit pos: SourceContext) : Rep[A]
+  def tuple2_get2[B:Typ](t: Rep[(?,B)])(implicit pos: SourceContext) : Rep[B]
 
-  def tuple3_get1[A:Typ](t: Rep[(A,_,_)])(implicit pos: SourceContext) : Rep[A]
-  def tuple3_get2[B:Typ](t: Rep[(_,B,_)])(implicit pos: SourceContext) : Rep[B]
-  def tuple3_get3[C:Typ](t: Rep[(_,_,C)])(implicit pos: SourceContext) : Rep[C]
+  def tuple3_get1[A:Typ](t: Rep[(A,?,?)])(implicit pos: SourceContext) : Rep[A]
+  def tuple3_get2[B:Typ](t: Rep[(?,B,?)])(implicit pos: SourceContext) : Rep[B]
+  def tuple3_get3[C:Typ](t: Rep[(?,?,C)])(implicit pos: SourceContext) : Rep[C]
 
-  def tuple4_get1[A:Typ](t: Rep[(A,_,_,_)])(implicit pos: SourceContext) : Rep[A]
-  def tuple4_get2[B:Typ](t: Rep[(_,B,_,_)])(implicit pos: SourceContext) : Rep[B]
-  def tuple4_get3[C:Typ](t: Rep[(_,_,C,_)])(implicit pos: SourceContext) : Rep[C]
-  def tuple4_get4[D:Typ](t: Rep[(_,_,_,D)])(implicit pos: SourceContext) : Rep[D]
+  def tuple4_get1[A:Typ](t: Rep[(A,?,?,?)])(implicit pos: SourceContext) : Rep[A]
+  def tuple4_get2[B:Typ](t: Rep[(?,B,?,?)])(implicit pos: SourceContext) : Rep[B]
+  def tuple4_get3[C:Typ](t: Rep[(?,?,C,?)])(implicit pos: SourceContext) : Rep[C]
+  def tuple4_get4[D:Typ](t: Rep[(?,?,?,D)])(implicit pos: SourceContext) : Rep[D]
 
-  def tuple5_get1[A:Typ](t: Rep[(A,_,_,_,_)])(implicit pos: SourceContext) : Rep[A]
-  def tuple5_get2[B:Typ](t: Rep[(_,B,_,_,_)])(implicit pos: SourceContext) : Rep[B]
-  def tuple5_get3[C:Typ](t: Rep[(_,_,C,_,_)])(implicit pos: SourceContext) : Rep[C]
-  def tuple5_get4[D:Typ](t: Rep[(_,_,_,D,_)])(implicit pos: SourceContext) : Rep[D]
-  def tuple5_get5[E:Typ](t: Rep[(_,_,_,_,E)])(implicit pos: SourceContext) : Rep[E]
+  def tuple5_get1[A:Typ](t: Rep[(A,?,?,?,?)])(implicit pos: SourceContext) : Rep[A]
+  def tuple5_get2[B:Typ](t: Rep[(?,B,?,?,?)])(implicit pos: SourceContext) : Rep[B]
+  def tuple5_get3[C:Typ](t: Rep[(?,?,C,?,?)])(implicit pos: SourceContext) : Rep[C]
+  def tuple5_get4[D:Typ](t: Rep[(?,?,?,D,?)])(implicit pos: SourceContext) : Rep[D]
+  def tuple5_get5[E:Typ](t: Rep[(?,?,?,?,E)])(implicit pos: SourceContext) : Rep[E]
 }
 
 trait TupleOpsExp extends TupleOps with StructExpOpt {

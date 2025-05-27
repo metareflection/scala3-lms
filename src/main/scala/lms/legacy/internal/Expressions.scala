@@ -22,8 +22,9 @@ trait Expressions extends Utils {
 
   case class ManifestTyp[T](mf: Manifest[T]) extends Typ[T] {
     def typeArguments: List[Typ[?]] = mf.typeArguments.map(ManifestTyp(_))
-    def arrayTyp: Typ[Array[T]] = ManifestTyp(Manifest.arrayManifest(mf))
+    def arrayTyp: Typ[Array[T]] = ManifestTyp(mf.arrayManifest)
     def runtimeClass: java.lang.Class[?] = mf.runtimeClass
+    def manifest = mf
     def <:<(that: Typ[?]): Boolean = that match {
       case ManifestTyp(mf1) => mf.<:<(mf1)
       case _ => false
@@ -68,12 +69,17 @@ trait Expressions extends Utils {
 
   case class Variable[+T](val e: Exp[Variable[T]]) // TODO: decide whether it should stay here ... FIXME: should be invariant
 
-  object VariableTyp {
-    def unapply(t: Typ[_]): Option[Typ[_]] =
-      if (t.runtimeClass == classOf[Variable[_]])
-        Some(t.typeArguments.head)
-      else
-        None
+  case class VariableTyp[T](inner: Typ[T]) extends Typ[Variable[T]] {
+    def <:<(that: Typ[?]): Boolean = that match {
+      case VariableTyp(inner2) => inner.<:<(inner2)
+      case _ => false
+    }
+
+    def arrayTyp = throw new RuntimeException("TODO: manifest for Array[Var[T]]")
+
+    def runtimeClass: Class[?] = throw new RuntimeException("TODO: VariableTyp.runtimeClass")
+
+    def typeArguments = List(inner)
   }
 
   var nVars = 0

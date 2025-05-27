@@ -1,6 +1,8 @@
 package scala.lms
 package common
 
+import scala.reflect.ClassTag
+
 import internal._
 
 /**
@@ -25,13 +27,13 @@ trait Base extends EmbeddedControls {
   protected def unit[T:Typ](x: T): Rep[T]
 
   implicit def unitTyp: Typ[Unit]
-  implicit def nullTyp: Typ[Null]
+  //implicit def nullTyp: Typ[Null]
 
   def typ[T:Typ]: Typ[T]
 
   // always lift Unit and Null (for now)
   implicit def unitToRepUnit(x: Unit): Rep[Unit] = unit(x)
-  implicit def nullToRepNull(x: Null): Rep[Null] = unit(x)
+  //implicit def nullToRepNull(x: Null): Rep[Null] = unit(x)
 
   given __virtualizedBoolConvInternal: Conversion[Rep[Boolean], Boolean] with
     def apply(x: Rep[Boolean]) = {
@@ -46,13 +48,10 @@ trait Base extends EmbeddedControls {
  */
 trait BaseExp extends Base with Expressions with Blocks with Transforming {
   type Rep[+T] = Exp[T]
-  //type Typ[T] = TypeExp[T] defined in Expressions
-  @deprecated("Use typ instead; will be removed in 1.1.0", "1.0.0")
-  protected def manifest[T:Typ] = implicitly[Typ[T]]
-  protected def manifestTyp[T:Manifest]: Typ[T] = ManifestTyp(implicitly[Manifest[T]])
+  protected def manifestTyp[T:ClassTag]: Typ[T] = ManifestTyp(Manifest.of[T])
 
   implicit def unitTyp: Typ[Unit] = manifestTyp
-  implicit def nullTyp: Typ[Null] = manifestTyp
+  //implicit def nullTyp: Typ[Null] = ManifestTyp(nullManifest)
 
   protected def unit[T:Typ](x: T) = Const(x)
 }

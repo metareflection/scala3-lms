@@ -36,7 +36,7 @@ trait StructTags {
 
 trait StructExp extends StructOps with StructTags with BaseExp with EffectExp with VariablesExp with ObjectOpsExp with StringOpsExp with OverloadHack {
 
-  implicit def recordTyp[T<:Record:Manifest]: Typ[T] = manifestTyp
+  implicit def recordTyp[T<:Record:scala.reflect.ClassTag]: Typ[T] = manifestTyp
 
   // TODO: structs should take Def parameters that define how to generate constructor and accessor calls
 
@@ -180,9 +180,8 @@ trait StructExp extends StructOps with StructTags with BaseExp with EffectExp wi
   def structName[T](m: Typ[T]): String = m match {
     // FIXME: move to codegen? we should be able to have different policies/naming schemes
     case ManifestTyp(rm: RefinedManifest[_]) => "Anon" + math.abs(rm.fields.map(f => f._1.## + f._2.toString.##).sum)
-    case ManifestTyp(m) if (m <:< implicitly[Manifest[AnyVal]]) => m.toString
     case ArrayTyp(tp) => "ArrayOf" + structName(tp)
-    case _ => m.runtimeClass.getSimpleName + m.typeArguments.map(a => structName(a)).mkString("")
+    case ManifestTyp(m) => m.toString
   }
 
   def classTag[T:Typ] = ClassTag[T](structName(typ[T]))
@@ -197,7 +196,7 @@ trait StructExp extends StructOps with StructTags with BaseExp with EffectExp wi
   def registerStruct[T](name: String, elems: Seq[(String, Rep[Any])]): Unit = {
     encounteredStructs += name -> elems.map(e => (e._1, e._2.tp))
   }
-  val encounteredStructs = new scala.collection.mutable.HashMap[String, Seq[(String, Typ[_])]]
+  val encounteredStructs = new scala.collection.mutable.HashMap[String, Seq[(String, Typ[?])]]
 }
 
 trait StructExpOpt extends StructExp {
@@ -431,7 +430,7 @@ trait ScalaGenStruct extends ScalaGenBase with BaseGenStruct {
   }
 
   override def remap[A](m: Typ[A]) = m match {
-    case ManifestTyp(s) if s <:< Manifest.of(using scala.reflect.ClassTag(classOf[Record])) => structName(m)
+    case ManifestTyp(s) if s <:< Manifest.of[Record] => structName(m)
     case _ => super.remap(m)
   }
 

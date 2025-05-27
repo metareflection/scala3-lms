@@ -61,9 +61,8 @@ trait GenericCodegen extends BlockTraversal {
   def remap[A](s: String, method: String, t: Typ[A]) : String = remap(s, method, t.toString)
   def remap(s: String, method: String, t: String) : String = s + method + "[" + remap(t) + "]"    
   def remap[A](m: Typ[A]): String = m match {
-    case ManifestTyp(rm: RefinedManifest[A]) =>  "AnyRef{" + rm.fields.foldLeft(""){(acc, f) => {val (n,mnf) = f; acc + "val " + n + ": " + remap(ManifestTyp(mnf)) + ";"}} + "}"
-    case VariableTyp(tp) =>
-        remap(tp)
+    case ManifestTyp(rm: RefinedManifest[?]) =>  "AnyRef{" + rm.fields.foldLeft(""){(acc, f) => {val (n,mnf) = f; acc + "val " + n + ": " + remap(ManifestTyp(mnf)) + ";"}} + "}"
+    case VariableTyp(tp) => remap(tp)
     case _ =>
       // call remap on all type arguments
       val targs = m.typeArguments

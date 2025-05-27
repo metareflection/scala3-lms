@@ -39,8 +39,7 @@ trait CLikeCodegen extends GenericCodegen {
   def remapWithRef(tpe: String): String = tpe + addRef(tpe)
 
   override def remap[A](m: Typ[A]) : String = m match {
-    case VariableTyp(tp) =>
-      remap(tp)
+    case VariableTyp(tp) => remap(tp)
     case _ if m.runtimeClass == classOf[List[_]] => // Use case: Delite Foreach sync list
       deviceTarget.toString + "List< " + remap(m.typeArguments.head) + " >"
     case _ =>
