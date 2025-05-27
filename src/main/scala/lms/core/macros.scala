@@ -115,25 +115,20 @@ class virtualize extends MacroAnnotation {
       }
     }
 
-    object Visitor extends TreeMap {
-      val vars: ScopedVarMap[(Symbol, TypeRepr, Term)] = new ScopedVarMap()
+    def isVarApply(conv: Term): Boolean = {
+      val convs = List(
+        "__virtualizedBareVarConvInternal",
+        "__virtualizedRepVarConvInternal"
+      )
 
+      def mkpattern(s: String) = raw""".*$s\[.*\]\.apply$$""".r
+
+      convs.exists(mkpattern(_).matches(conv.show))
+    }
+
+    object Visitor extends TreeMap {
       override def transformTerm(tree: Term)(owner: Symbol): Term = {
         tree match {
-          case Ident(name) => {
-            vars.lookup(name) match {
-              case Some((sym, t, ttyp)) => {
-                val thist = makeThis(owner)
-                val srcGen = '{SourceContext.generate}.asTerm
-                // this.readVar[T](x)(using ttyp, srcGen)
-                Apply(
-                  Select.overloaded(thist, "readVar", List(t), List(Ref(sym))),
-                  List(ttyp, srcGen))
-              }
-              case None => tree
-            }
-          }
-
           case Apply(
             Select(_, "boolToBoolRep"),
             List(x@Apply(Select(_, "=="), List(_)))) => this.transformTerm(x)(owner)
@@ -253,6 +248,16 @@ class virtualize extends MacroAnnotation {
             result
           }
 
+          case Assign(lhs, rhs) => {
+            val thist = makeThis(owner)
+            val srcGen = '{SourceContext.generate}.asTerm
+
+            val lhst = this.transformTerm(lhs)(owner)
+            val rhst = this.transformTerm(rhs)(owner)
+
+            report.errorAndAbort("lhst = " + lhst.show + "\nrhst = " + rhst.show)
+          }
+
           case _ => super.transformTerm(tree)(owner)
         }
       }
@@ -260,18 +265,16 @@ class virtualize extends MacroAnnotation {
       override def transformStatement(tree: Statement)(owner: Symbol): Statement = {
         val srcGen = '{SourceContext.generate}.asTerm
         tree match {
-          case ValDef(name, tptp, Some(rhsp)) => {
-            val sym = tree.symbol
-
-            if (!sym.flags.is(Flags.Mutable)) {
+          case ValDef(name, tptp, Some(Apply(conv, List(rhsp)))) => {
+            if (!isVarApply(conv)) {
               return super.transformStatement(tree)(owner)
             }
 
             val thist = makeThis(owner)
             val rhs = this.transformTerm(rhsp)(owner)
 
-            val (tpt, tgt, trep, ttyp) = repOrVar(rhs.tpe) match {
-              case RepW(t) => {
+            val (tpt, tgt, trep, ttyp) = unRep(rhs.tpe) match {
+              case Some(t) => {
                 val ttyp = findTypW(thist, t)
                 val overload = findOverload(thist, 1)
                 val newVarT = Select.overloaded(thist, "__newVar", List(t), List(rhs))
@@ -280,20 +283,8 @@ class virtualize extends MacroAnnotation {
 
                 (varT, result, t, ttyp)
               }
-
-              case VarW(t) => {
-                val ttyp = findTypW(thist, t)
-                val overload = findOverload(thist, 2)
-                val newVarT = Select.overloaded(thist, "__newVar", List(t), List(rhs))
-                val varT = TypeTree.of(using rhs.tpe.asType)
-                val result = Apply(newVarT, List(overload, ttyp, srcGen))
-
-                (varT, result, t, ttyp)
-              }
-
-              // XXX - This will cause us to delay _every_ mutable variable, even
-              // ones that might be able to be discharged at stage-time.
-              case Bare(trep) => {
+              case None => {
+                val trep = rhs.tpe.widen
                 // We can't use `findTypW` because we actually might be working
                 // with a non-reifiable stage-time construct.
                 val t = TypeTree.of(using trep.asType)
@@ -302,8 +293,9 @@ class virtualize extends MacroAnnotation {
                   // Failure should be impossible, else we wouldn't have been
                   // able to form the type Rep[T]
                   case success: ImplicitSearchSuccess => success.tree
-                  case failure: ImplicitSearchFailure =>
+                  case failure: ImplicitSearchFailure => {
                     return super.transformStatement(tree)(owner)
+                  }
                 }
                 val newVarT = Select.overloaded(thist, "__newVar", List(trep), List(rhs))
                 val varT = Applied(TypeSelect(thist, "Var"), List(t))
@@ -313,16 +305,36 @@ class virtualize extends MacroAnnotation {
               }
             }
 
-            val privateWithin = sym.privateWithin match {
-              case Some(ty) => ty.typeSymbol
-              case None => Symbol.noSymbol
+            ValDef.copy(tree)(name, tpt, Some(tgt))
+          }
+
+          case ValDef(name, tptp, Some(rhsp)) => {
+            val sym = tree.symbol
+
+            if (!sym.flags.is(Flags.Mutable)) {
+              return super.transformStatement(tree)(owner)
             }
 
-            val newSym = Symbol.newVal(owner, name, tpt.tpe, sym.flags, privateWithin)
+            val t = repOrVar(tptp.tpe) match {
+              case VarW(t) => t
+              case _ => return super.transformStatement(tree)(owner)
+            }
 
-            vars.add(name, (newSym, trep, ttyp))
+            val thist = makeThis(owner)
+            val rhs = this.transformTerm(rhsp)(owner)
 
-            ValDef(newSym, Some(tgt))
+            // TODO: un-copypaste this from above
+            val (tpt, tgt, trep, ttyp) = {
+              val ttyp = findTypW(thist, t)
+              val overload = findOverload(thist, 1)
+              val newVarT = Select.overloaded(thist, "__newVar", List(t), List(rhs))
+              val varT = Applied(TypeSelect(thist, "Var"), List(TypeTree.of(using t.asType)))
+              val result = Apply(newVarT, List(overload, ttyp, srcGen))
+
+              (varT, result, t, ttyp)
+            }
+
+            ValDef.copy(tree)(name, tpt, Some(tgt))
           }
 
           case _ => super.transformStatement(tree)(owner)

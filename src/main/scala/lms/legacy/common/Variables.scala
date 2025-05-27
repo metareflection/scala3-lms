@@ -41,13 +41,20 @@ trait LowPriorityVariableImplicits extends ImplicitOps {
 trait VariableImplicits extends LowPriorityVariableImplicits {
   this: Variables =>
 
+  // Cam: Scala 3 changed how implicit search works, and now these cause an "ambiguous implicit" error.
   // we always want to prioritize a direct conversion if any Rep will do
-  implicit def varIntToRepInt(v: Var[Int])(implicit pos: SourceContext): Rep[Int] = readVar(v)
-  implicit def varFloatToRepFloat(v: Var[Float])(implicit pos: SourceContext): Rep[Float] = readVar(v)
+  //implicit def varIntToRepInt(v: Var[Int])(implicit pos: SourceContext): Rep[Int] = readVar(v)
+  //implicit def varFloatToRepFloat(v: Var[Float])(implicit pos: SourceContext): Rep[Float] = readVar(v)
 }
 
 trait Variables extends Base with OverloadHack with VariableImplicits with ReadVarImplicit {
   type Var[+T] //FIXME: should be invariant
+
+  given __virtualizedBareVarConvInternal[T]: Conversion[T, Var[T]] with
+    def apply(x: T): Var[T] = throw new RuntimeException("attempted to call __virtualizedBareVarConvInternal (did you forget to virtualize?)");
+
+  given __virtualizedRepVarConvInternal[T]: Conversion[Rep[T], Var[T]] with
+    def apply(x: Rep[T]): Var[T] = throw new RuntimeException("attempted to call __virtualizedRepVarConvInternal (did you forget to virtualize?)");
 
   //implicit def chainReadVar[T,U](x: Var[T])(implicit f: Rep[T] => U): U = f(readVar(x))
   def var_new[T:Typ](init: Rep[T])(implicit pos: SourceContext): Var[T]
