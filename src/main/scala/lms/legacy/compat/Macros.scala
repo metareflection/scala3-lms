@@ -18,7 +18,7 @@ def structFieldsImpl[T: Type](using quotes: Quotes): Expr[List[(String, Manifest
     val fieldType = tpe.memberType(sym)
     fieldType.asType match
       case '[ft] =>
-        val mft = '{ Manifest.derived[ft] }
+        val mft = '{ Manifest.of[ft] }
         '{ ($name, $mft) }
   }
 
@@ -30,9 +30,16 @@ def derivedImpl[T: Type](using Quotes): Expr[Manifest[T]] = {
 
   val tpe = TypeRepr.of[T]
 
-  val ctExpr = Expr.summon[ClassTag[T]].getOrElse {
-    report.error(s"Cannot summon ClassTag for ${Type.show[T]}")
-    return '{ ??? }
+  if (tpe.show.contains("Var")) {
+    report.error("tpe = " + tpe + "\n" + tpe.show)
+  }
+
+  val ctExpr = Expr.summon[ClassTag[T]] match {
+    case Some(exp) => exp
+    case None => {
+      report.error(s"Cannot summon ClassTag for ${Type.show[T]}")
+      return '{ ??? }
+    }
   }
 
   val typeArgsExprs: List[Expr[Manifest[?]]] = tpe match
@@ -40,16 +47,11 @@ def derivedImpl[T: Type](using Quotes): Expr[Manifest[T]] = {
       args.map {
         case arg =>
           arg.asType match
-            case '[ta] => '{ Manifest.derived[ta] }
+            case '[ta] => '{ Manifest.of[ta] }
       }
     case _ => Nil
 
   val listExpr = Expr.ofList(typeArgsExprs)
 
-  '{
-    new Manifest[T]:
-      def runtimeClass: Class[?] = $ctExpr.runtimeClass
-      def typeArguments: List[Manifest[?]] = $listExpr
-      def arrayManifest: Manifest[Array[T]] = Manifest.derived[Array[T]]
-  }
+  '{ ObjManifest[T]($ctExpr, $listExpr) }
 }

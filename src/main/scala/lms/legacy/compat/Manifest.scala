@@ -4,9 +4,10 @@ import scala.reflect.ClassTag
 import scala.quoted.*
 
 trait Manifest[T] {
-  def classTag: ClassTag[T]
-  def runtimeClass: Class[?]
   def typeArguments: List[Manifest[?]]
+  def runtimeClass: Class[?]
+  def arrayManifest: Manifest[Array[T]]
+
   def <:<[U](that: Manifest[U]): Boolean =
     that.runtimeClass.isAssignableFrom(this.runtimeClass)
 
@@ -34,34 +35,45 @@ trait Manifest[T] {
   }
 }
 
+case class ObjManifest[T](classTag: ClassTag[T], typeArguments: List[Manifest[?]])
+  extends Manifest[T]
+{
+  override def runtimeClass = classTag.runtimeClass
+
+  override def arrayManifest: Manifest[Array[T]] = {
+    val ct = classTag
+    val arrayCt = arrayClassTag(using ct)
+    ObjManifest(arrayCt, List(this))
+  }
+}
+
+case class NullManifest() extends Manifest[Null] {
+  override def runtimeClass = classOf[Null]
+
+  override def typeArguments = List()
+
+  override def arrayManifest: Manifest[Array[Null]] =
+    ObjManifest(ClassTag(classOf[Array[Any]]), List(this))
+}
+
 private def arrayClassTag[T](using ct: ClassTag[T]): ClassTag[Array[T]] =
   summon[ClassTag[Array[T]]]
 
 object Manifest {
-  given manifestFromClassTag[T](using ct: ClassTag[T]): Manifest[T] with
-    def classTag = ct
-    def runtimeClass: Class[?] = ct.runtimeClass
-    def typeArguments: List[Manifest[?]] = Nil
-
-  def arrayManifest[T](m: Manifest[T]): Manifest[Array[T]] = {
-    val ct: ClassTag[T] = m.classTag
-    val arrayCt = arrayClassTag(using ct)
-    manifestFromClassTag(using arrayCt)
-  }
-
-  inline def derived[T]: Manifest[T] = ${ derivedImpl[T] }
-
-  def of[T](using ct: ClassTag[T]) = manifestFromClassTag[T]
+  inline def of[T]: Manifest[T] = ${ derivedImpl[T] }
 }
 
+implicit def manifestFromClassTag[T: ClassTag]: Manifest[T] = Manifest.of[T]
+
+// TODO: This should extend `Manifest[T]` instead of including one.
 case class RefinedManifest[T](ct: Manifest[T], fields: List[(String, Manifest[?])])
 
 object RefinedManifest {
   implicit def materialize[T](implicit ct: ClassTag[T]): RefinedManifest[T] =
-    RefinedManifest(Manifest.manifestFromClassTag(using ct), structFields[T])
+    RefinedManifest(null, structFields[T])
 
   inline def structFields[T]: List[(String, Manifest[?])] = ${ structFieldsImpl[T] }
 }
 
-implicit val nullManifest: Manifest[Null] = Manifest.of(using ClassTag(classOf[Null]))
-implicit val anyManifest: Manifest[Any] = Manifest.of(using ClassTag(classOf[Any]))
+implicit val nullManifest: Manifest[Null] = NullManifest()
+implicit val anyManifest: Manifest[Any] = Manifest.of[Any]
