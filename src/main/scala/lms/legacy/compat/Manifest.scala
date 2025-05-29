@@ -30,7 +30,7 @@ trait Manifest[T] {
       }
 
     val base = simplify(runtimeClass.getTypeName)
-    if typeArguments.isEmpty then base
+    if typeArguments.isEmpty || base.startsWith("Array") then base
     else s"$base[${typeArguments.map(_.toString).mkString(", ")}]"
   }
 }
@@ -54,6 +54,8 @@ case class NullManifest() extends Manifest[Null] {
 
   override def arrayManifest: Manifest[Array[Null]] =
     ObjManifest(ClassTag(classOf[Array[Any]]), List(this))
+
+  override def toString: String = "Null"
 }
 
 private def arrayClassTag[T](using ct: ClassTag[T]): ClassTag[Array[T]] =

@@ -113,6 +113,7 @@ class virtualize extends MacroAnnotation {
         repOrVar(inferredTyp) match {
           case RepW(t) => return Block(body, v)
           case RepLike(t) => t
+          case _ => report.errorAndAbort("BUG: repOrVar returned neither RepW or RepLike")
         }
 
       val ttree = TypeTree.of(using semanticTy.asType)
