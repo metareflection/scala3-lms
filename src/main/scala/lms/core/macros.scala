@@ -1,5 +1,17 @@
 package scala.lms
 
+/* The main frontend driver for scala3-lms.
+ *
+ * TODO:
+ * - `unRep` is a bad function and should be excised. The main problem is that
+ *   `repOrVar` widens the type, ensuring that `1` reports type `Int` instead
+ *   of `1`, but `unRep` loses this information. Instead, we should use the
+ *   `RepLike` extractor.
+ * - Handling of `Var`s in general is very messy and should be rethought.
+ * - `dropTrailingUnitInWhileBody` should be rewritten in terms of
+ *   `ensureTrailingRep`.
+ */
+
 import scala.reflect.ClassTag
 import scala.annotation.*
 import scala.quoted.*
@@ -16,6 +28,15 @@ class virtualize extends MacroAnnotation {
     case class RepW(t: TypeRepr) extends RepOrVar
     case class VarW(t: TypeRepr) extends RepOrVar
     case class Bare(t: TypeRepr) extends RepOrVar
+
+    object RepLike {
+      def unapply(rv: RepOrVar): Option[TypeRepr] =
+        rv match {
+          case RepW(_) => None
+          case VarW(t) => Some(t)
+          case Bare(t) => Some(t)
+        }
+    }
 
     def findMethods(owner: Symbol, name: String): List[Symbol] =
         if (owner.isNoSymbol) Nil
@@ -81,6 +102,32 @@ class virtualize extends MacroAnnotation {
     def flattenBlock(t: Term): Term = {
       val (body, v) = flattenBlockT(t)
       Block(body, v)
+    }
+
+    def ensureTrailingRep(t: Term, thist: Term, unitf: Term): Term = {
+      val (body, v) = flattenBlockT(t)
+      val inferredTyp = v.tpe
+
+      // TODO: This is incorrect in the Var case.
+      val semanticTy =
+        repOrVar(inferredTyp) match {
+          case RepW(t) => return Block(body, v)
+          case RepLike(t) => t
+        }
+
+      val ttree = TypeTree.of(using semanticTy.asType)
+      val ttyp = Applied(TypeSelect(thist, "Typ"), List(ttree))
+
+      val ttypW = Implicits.search(ttyp.tpe) match {
+        case success: ImplicitSearchSuccess => success.tree
+        case failure: ImplicitSearchFailure =>
+          report.errorAndAbort("couldn't construct type manifest for type Rep[" + inferredTyp.show + "]")
+      }
+
+      // unit[T](v)(using Typ.of[T])
+      val repv = Apply(Apply(TypeApply(unitf, List(ttree)), List(v)), List(ttypW))
+
+      Block(body, repv)
     }
 
     def dropTrailingUnitInWhileBody(t: Term, thist: Term, unitf: Term): Term =
@@ -175,6 +222,12 @@ class virtualize extends MacroAnnotation {
             val thist = makeThis(owner)
             val srcGen = '{SourceContext.generate}.asTerm
 
+            val unitf = findMethods(owner, "unit") match {
+              case Nil =>
+                report.errorAndAbort("LMS-internal error: no [unit] found for self")
+              case x :: _ => thist.select(x)
+            }
+
             val xt =
               if (conv.show.endsWith("__virtualizedBoolConvInternal.apply")) {
                 this.transformTerm(x)(owner)
@@ -191,14 +244,15 @@ class virtualize extends MacroAnnotation {
               case None => return super.transformTerm(tree)(owner)
             }
 
-            val thent = this.transformTerm(thenp)(owner)
-            val elset = this.transformTerm(elsep)(owner)
+            val thent = ensureTrailingRep(this.transformTerm(thenp)(owner), thist, unitf)
+            val elset = ensureTrailingRep(this.transformTerm(elsep)(owner), thist, unitf)
 
-            val ttype = thenp.tpe.widen
+            val ttype = thent.tpe.widen
             val trep = unRep(ttype) match {
               case Some(t) => t
               case None =>
-                report.errorAndAbort("arms of virtualized if/else must be Reps, instead got " + ttype.show)
+                report.errorAndAbort(
+                  "BUG: virtualized if/else body does not have trailing Rep type, instead has " + ttype.show)
             }
 
             val tt = unRep(ttype)
@@ -224,7 +278,7 @@ class virtualize extends MacroAnnotation {
 
             val unitf = findMethods(owner, "unit") match {
               case Nil =>
-                report.errorAndAbort("LMS-internal error: no [unit] found for self")
+                report.errorAndAbort("BUG: no [unit] found for self")
               case x :: _ => thist.select(x)
             }
 

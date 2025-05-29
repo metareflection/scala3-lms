@@ -90,4 +90,17 @@ class VirtualizeTest extends TutorialFunSuite {
     }
     check("power", Snippet.code)
   }
+
+  test("one-sided if") {
+    object Snippet extends DslDriver[Int,Int] {
+      def snippet(b: Rep[Int]): Rep[Int] = {
+        if (b < 10) {
+          println("b is less than 10")
+        }
+
+        2
+      }
+    }
+    check("one-sided-if", Snippet.code)
+  }
 }
