@@ -13,15 +13,25 @@ The original LMS source can be found [here](https://github.com/TiarkRompf/virtua
 Most core functionality has been successfully ported, and basic code generation
 works as expected.
 
-Missing features:
+#### Missing features:
 - Reification of complex data types
 - In-process execution of staged code (`eval` and friends)
 - Non-Scala backends
 
-Bugs:
+#### Bugs:
 - Types with nested type parameters are buggy
 - Writing overly-generic code is difficult-to-impossible due to changes to
   Scala 3's reflection semantics
+
+#### Limitations:
+- Staged mutable variables (e.g., something that should be mutated in the
+  generated code) must be type-annotated, e.g.
+
+  ```
+  var x: Var[Int] = 1
+  ```
+
+  This is due to changes to how Scala 3 handles macros.
 
 
 ### Background:
@@ -29,9 +39,6 @@ Bugs:
 - [LMS website](http://scala-lms.github.io)
 
 - [LMS paper](http://infoscience.epfl.ch/record/150347/files/gpce63-rompf.pdf)
-
-- [Delite website](http://stanford-ppl.github.com/Delite/)
-
 
 ### How to build:
 
